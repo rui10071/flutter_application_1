@@ -1,43 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
 import 'selection_screen.dart';
 import 'mydata_screen.dart';
 import 'profile_screen.dart';
 import 'details_screen.dart';
-import 'widgets/bottom_nav_bar.dart';
+import 'training_model.dart';
+import 'main_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Stack(
+        child: ListView(
+          padding: EdgeInsets.only(bottom: 100),
           children: [
-            ListView(
-              padding: EdgeInsets.only(bottom: 100),
-              children: [
-                _buildHeader(context),
-                _buildSummaryCards(),
-                _buildRecommendedHeader(context),
-                _buildRecommendedList(context),
-                _buildActivityGraph(context),
-              ],
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: BottomNavBar(currentIndex: 0),
-            ),
+            _buildHeader(context, ref),
+            _buildSummaryCards(),
+            _buildRecommendedHeader(context, ref),
+            _buildRecommendedList(context),
+            _buildActivityGraph(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
@@ -47,7 +39,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage("https://lh3.googleusercontent.com/a/ACg8ocL8H-js-L2B5-ylkGk22otY83f-hO9a-b-T7-Z-y-8h=s96-c"),
+                backgroundImage: AssetImage("assets/images/burpee.jpg"),
               ),
               SizedBox(width: 12),
               Text(
@@ -60,7 +52,7 @@ class HomeScreen extends StatelessWidget {
             icon: Icon(Icons.account_circle_outlined, color: Theme.of(context).textTheme.bodyLarge?.color),
             iconSize: 28,
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+              ref.read(mainNavIndexProvider.notifier).state = 3;
             },
           ),
         ],
@@ -109,7 +101,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommendedHeader(BuildContext context) {
+  Widget _buildRecommendedHeader(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Row(
@@ -120,7 +112,7 @@ class HomeScreen extends StatelessWidget {
           TextButton(
             child: Text("すべて見る", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SelectionScreen()));
+              ref.read(mainNavIndexProvider.notifier).state = 1;
             },
           ),
         ],
@@ -129,22 +121,88 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRecommendedList(BuildContext context) {
-    final items = [
-      {"title": "モーニングヨガ", "desc": "15分 | 初級", "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCfgHdBL6e4Ybmu597OawI6e2HgfsbLGKvuKxPf64r7HkKU1eYr_61Z5nlAP7I9X9EnZPMMV1Ln6vg08V_2OTHObLS3KOo_k1g90nvZNPuoBMb-Fz526BAHj3qVKymn35MsM7jbsKwVpFQw8NQDQJyPOmESD_AbA05IWqBRLexjlrCFdoiL2VhGMs4TBMXgMfELGaNSuLFjtqgP8-4Olyd6dHbJYrTbkzN6Hc4QgYMngJ4VJDlEpB4NQHQ-71-R--xjLvYOVAQgZ8c"},
-      {"title": "全身HIIT", "desc": "20分 | 中級", "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDYNMMyV-bjyPdUqKHo12TgcsCwSux6uCC6wz9yOJB3KKEhcVoKANz5j60uETqsGmeycTSKxzXxKAEQK-zztpze-n-oU73rJ0FNovznXW4TRLcp2R84pRnNsM4-Lh7KnBwkJFo090xKG1SDx5_qVLD9Z2TP4bBVUAYQOdpMR0mOcOM59O8e1i_PgViGkSAtpcywgzE3DUCVMbpMbIvEt3cb3YxP4pU8VtORNuwmIz0kvryEqS2ydWrTzUF9-I1ismKCYoNFfegiUx8"},
-      {"title": "肩の集中トレーニング", "desc": "10分 | 中級", "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2940&auto=format&fit=crop"},
+    final List<Map<String, dynamic>> feedback = [
+      {"title": "AIからのフィードバック", "desc": "昨日のスクワットのフォーム（膝）が乱れていました。復習しましょう。", "isAIFeedback": true, "imagePath": "assets/images/deadlift.jpg", "isAsset": true},
     ];
+    
+    final recommendedItems = DUMMY_TRAININGS.take(3).toList();
 
     return Container(
-      height: 180,
+      height: 190,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 16),
-        itemCount: items.length,
+        itemCount: feedback.length + recommendedItems.length,
         itemBuilder: (context, index) {
+          
+          if (index == 0) {
+            final item = feedback[0];
+            final bool isAIFeedback = item["isAIFeedback"] as bool? ?? false;
+
+            return GestureDetector(
+              onTap: () {
+                final squatMenu = DUMMY_TRAININGS.firstWhere((m) => m.id == "squat", orElse: () => DUMMY_TRAININGS.first);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: squatMenu)));
+              },
+              child: Container(
+                width: 256,
+                margin: EdgeInsets.only(right: 16),
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  color: isAIFeedback ? kPrimaryColor.withOpacity(0.15) : Theme.of(context).cardTheme.color,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Image.asset(
+                        item["imagePath"]! as String,
+                        height: 100,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item["title"]! as String, style: TextStyle(fontWeight: FontWeight.bold)),
+                            SizedBox(height: 4),
+                            Text(
+                              item["desc"]! as String, 
+                              style: TextStyle(
+                                color: isAIFeedback ? kTextDark : kTextDarkSecondary, 
+                                fontSize: 12
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+          
+          final item = recommendedItems[index - 1];
+          final Widget imageWidget = item.isAsset
+            ? Image.asset(
+                item.imagePath,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+            : Image.network(
+                item.imagePath,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              );
+
           return GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)));
             },
             child: Container(
               width: 256,
@@ -154,20 +212,23 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Image.network(
-                      items[index]["image"]!,
-                      height: 100,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                    imageWidget,
                     Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(items[index]["title"]!, style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(item.title, style: TextStyle(fontWeight: FontWeight.bold)),
                           SizedBox(height: 4),
-                          Text(items[index]["desc"]!, style: TextStyle(color: kTextDarkSecondary, fontSize: 12)),
+                          Text(
+                            item.description, 
+                            style: TextStyle(
+                              color: kTextDarkSecondary, 
+                              fontSize: 12
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                     ),

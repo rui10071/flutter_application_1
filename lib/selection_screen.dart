@@ -1,30 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
-import 'widgets/bottom_nav_bar.dart';
 import 'details_screen.dart';
+import 'training_model.dart';
+import 'main_screen.dart';
 
-class SelectionScreen extends StatelessWidget {
+class SelectionScreen extends ConsumerStatefulWidget {
+  @override
+  _SelectionScreenState createState() => _SelectionScreenState();
+}
+
+class _SelectionScreenState extends ConsumerState<SelectionScreen> {
+  String _selectedChip = "すべて";
+  String _searchQuery = "";
+  List<TrainingMenu> _filteredList = DUMMY_TRAININGS;
+  final TextEditingController _searchController = TextEditingController();
+
+  final List<String> _chips = ["すべて", "上半身", "下半身", "コア", "ヨガ"];
+
+  @override
+  void initState() {
+    super.initState();
+    _filterList();
+  }
+
+  void _filterList() {
+    List<TrainingMenu> list = DUMMY_TRAININGS;
+
+    if (_selectedChip != "すべて") {
+      list = list.where((menu) => menu.category == _selectedChip).toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      list = list.where((menu) =>
+        menu.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        menu.description.toLowerCase().contains(_searchQuery.toLowerCase())
+      ).toList();
+    }
+
+    setState(() {
+      _filteredList = list;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Stack(
+        child: Column(
           children: [
-            ListView(
-              padding: EdgeInsets.only(bottom: 100),
-              children: [
-                _buildAppBar(context),
-                _buildSearchBar(context),
-                _buildChips(),
-                _buildGrid(context),
-              ],
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: BottomNavBar(currentIndex: 1),
+            _buildAppBar(context, ref),
+            _buildSearchBar(context),
+            _buildChips(),
+            Expanded(
+              child: _buildGrid(context),
             ),
           ],
         ),
@@ -32,7 +62,7 @@ class SelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
       child: Row(
@@ -40,7 +70,9 @@ class SelectionScreen extends StatelessWidget {
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyLarge?.color),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              ref.read(mainNavIndexProvider.notifier).state = 0;
+            },
           ),
           Text("トレーニング", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(width: 48),
@@ -54,10 +86,29 @@ class SelectionScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+          _filterList();
+        },
         decoration: InputDecoration(
           hintText: "トレーニングを検索",
           hintStyle: TextStyle(color: kTextDarkSecondary),
           prefixIcon: Icon(Icons.search, color: kTextDarkSecondary),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: kTextDarkSecondary),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = "";
+                    });
+                    _filterList();
+                  },
+                )
+              : null,
           filled: true,
           fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
           border: OutlineInputBorder(
@@ -71,24 +122,32 @@ class SelectionScreen extends StatelessWidget {
   }
 
   Widget _buildChips() {
-    final chips = ["すべて", "上半身", "下半身", "コア", "ヨガ"];
     return Container(
       height: 40,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 16),
-        itemCount: chips.length,
+        itemCount: _chips.length,
         itemBuilder: (context, index) {
-          final isSelected = index == 0;
+          final chipName = _chips[index];
+          final isSelected = _selectedChip == chipName;
           return Container(
             margin: EdgeInsets.only(right: 8),
-            child: Chip(
-              label: Text(chips[index]),
+            child: ChoiceChip(
+              label: Text(chipName),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedChip = chipName;
+                });
+                _filterList();
+              },
               labelStyle: TextStyle(
                 color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
-              backgroundColor: isSelected ? kPrimaryColor : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200]),
+              backgroundColor: (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200]),
+              selectedColor: kPrimaryColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(color: Colors.transparent),
@@ -102,51 +161,57 @@ class SelectionScreen extends StatelessWidget {
   }
 
   Widget _buildGrid(BuildContext context) {
-    final items = [
-      {"title": "15分間上半身強化", "desc": "15分・中級", "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBCBqVhQvC9y9qSiPRFmLUQp9CatnnIr1Di6W3dDnWk7_5CMpZkKNTysrlBAT6YlQ--WbDWp1JHxDOALKZVGXBVD8TMnkQn0R6V8fwq3NvWcXvR1KU0I4J5t3dmF9N7-GiCLD_WV4d7AVdEN5AWMyDtpR4_SjavnmBJqBPmJUMVANxyUHPDzUP09wbmBqF4E6OafEbhjzWuTTUJKcPVuU3lo0AADJkA6mUV5gbB8L3pDBannbT_kD5FQLpMFtSY-4QyfHud7nSlO3I"},
-      {"title": "20分間下半身集中", "desc": "20分・上級", "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAM7ODQIFSGjVO_HOrRDmZBn5bSNJCGFcaqW87hPflDhJnNdqHkySER71nFmynzv-fcL61pxiikYnMXosV_pf1LKVu-PLWrcDFVvunB_WYxckyOsh_r1Shh0e3qzFC9hjhAJMnfNAlfP8_feVmIO5phechh_3B8gfeFeUtN6ByijJnN5q7yMqf_K3wSTx-k6z2fUaB3EMbUUafOVQLT6idTiywcQVe1Y58fXZF9oBObitxFhGvxeGE4ehLQ_o-K12GdSiC6cUQYvQw"},
-      {"title": "30分間ヨガフロー", "desc": "30分・初級", "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDSzLYxOvzHDSdgqV9guEvoXQDpUr2W04AYBVYEAB45T__qdMczDAJA1r-cFdoYD1x3gkg4LE7eI7Re73Sb4YpdN6du60YLuW9KyWVwP00xSQQbcWoa89vOcClFxnxfKdommu5DMpMCu9gC0jN9tpaIQuU7InuPcprosS3P2I_n6nMGq2x-1Kbv760e21GMCtrt21c6_gSLqu1OYWEa83T3XbAFlED42wuBrnaPhlYUFMQ1P-0Ye2jJ8RyhLzqt1iTo_CgPbehW66g"},
-      {"title": "10分間全身ワークアウト", "desc": "10分・中級", "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDcv3mnUvd5KONbCJuSmDlvq6Ijh_aFTxznXv0QKQuOFvpxkxUTuyug8_FXV_B7fuC2B1CKAp44nFxf_gaPnIGnb5BP1dubTBV_O1gR-yAo-Pu2HGt_6mTfNWZEOTauLEMH66zpSijOviAGfCUt3yTT5tdn5zUPSsG31AqgJgpHSmCchTbkZVCY94gt080m93if2J2NNQ98hd-E3PN8ucf0AFuKKDkVYXSh6Tt1Bi1B7xRc7crEJMkqzos7T_9rqbny2-6UPKJJNGE"},
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: items.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.8,
+    if (_filteredList.isEmpty) {
+      return Center(
+        child: Text(
+          "該当するトレーニングはありません",
+          style: TextStyle(color: kTextDarkSecondary),
         ),
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen()));
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AspectRatio(
-                  aspectRatio: 1.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      items[index]["image"]!,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(items[index]["title"]!, style: TextStyle(fontWeight: FontWeight.w500)),
-                Text(items[index]["desc"]!, style: TextStyle(color: kTextDarkSecondary, fontSize: 14)),
-              ],
-            ),
-          );
-        },
+      );
+    }
+    
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      itemCount: _filteredList.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
       ),
+      itemBuilder: (context, index) {
+        final item = _filteredList[index];
+        final Widget imageWidget = item.isAsset
+          ? Image.asset(
+              item.imagePath,
+              fit: BoxFit.cover,
+            )
+          : Image.network(
+              item.imagePath,
+              fit: BoxFit.cover,
+            );
+            
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)));
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 1.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: imageWidget,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(item.title, style: TextStyle(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis,),
+              Text(item.description, style: TextStyle(color: kTextDarkSecondary, fontSize: 14)),
+            ],
+          ),
+        );
+      },
     );
   }
 }

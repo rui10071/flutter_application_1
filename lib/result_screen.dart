@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; // グラフ用にインポート
+import 'package:fl_chart/fl_chart.dart'; 
 import 'theme.dart';
 import 'widgets/bottom_nav_bar.dart';
 
@@ -12,7 +12,7 @@ class ResultScreen extends StatelessWidget {
         children: [
           SafeArea(
             bottom: false,
-            child: ListView( // SingleChildScrollViewからListViewに変更
+            child: ListView( 
               padding: EdgeInsets.fromLTRB(16, 0, 16, 100),
               children: [
                 SizedBox(height: 40),
@@ -22,8 +22,7 @@ class ResultScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 32),
-                // _buildScoreIndicator(), // ← 総合スコアを削除
-                _buildDailyWorkoutChart(context), // ← 今日の運動量グラフを追加
+                _buildDailyWorkoutChart(context), 
                 SizedBox(height: 32),
                 _buildPerformanceDetails(context),
                 SizedBox(height: 24),
@@ -35,7 +34,6 @@ class ResultScreen extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            // ナビバーの currentIndex を 2 (記録) に変更
             child: BottomNavBar(currentIndex: 2),
           ),
         ],
@@ -43,39 +41,36 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
-  // --- 今日の運動量グラフ (種目ごと) を追加 ---
   Widget _buildDailyWorkoutChart(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
 
-    // ダミーデータ (プッシュアップ: 20回, スクワット: 30回, プランク: 60秒)
     final workoutData = {
       'プッシュアップ': 20.0,
-      'スクワット': 30.0,
-      'プランク': 60.0, // 秒数もそのまま突っ込む (テキトー)
+      'フォーム安定度': 85.0,
     };
     final labels = workoutData.keys.toList();
     final values = workoutData.values.toList();
-    final maxValue = values.isNotEmpty ? values.reduce((a, b) => a > b ? a : b) * 1.2 : 10.0; // 最大値 + 20%
+    final maxValue = 100.0;
 
     return Column(
        crossAxisAlignment: CrossAxisAlignment.start,
        children: [
           Text(
-            "今日の運動量",
+            "プッシュアップの結果",
             style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 12),
           Card(
-            color: kCardDark, // 背景色を指定
+            color: kCardDark, 
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                height: 150, // グラフの高さ
+                height: 150, 
                 child: BarChart(
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
-                    maxY: maxValue, // Y軸の最大値
+                    maxY: maxValue, 
                     barTouchData: BarTouchData(enabled: true),
                     titlesData: FlTitlesData(
                       show: true,
@@ -93,15 +88,15 @@ class ResultScreen extends StatelessWidget {
                             }
                             return Container();
                           },
-                          reservedSize: 30, // ラベル用のスペース
+                          reservedSize: 30, 
                         ),
                       ),
-                      leftTitles: AxisTitles( // Y軸 (左側)
+                      leftTitles: AxisTitles( 
                         sideTitles: SideTitles(
-                          showTitles: true, // 目盛りを表示
-                          reservedSize: 40, // 目盛り用のスペース
+                          showTitles: true, 
+                          reservedSize: 40, 
                           getTitlesWidget: (double value, TitleMeta meta) {
-                             if (value == 0 || value == maxValue ~/ 2 || value == maxValue) {
+                             if (value == 0 || value == 50 || value == 100) {
                                 return Text(value.toInt().toString(), style: TextStyle(color: textColor, fontSize: 10));
                              }
                               return Text('');
@@ -120,7 +115,7 @@ class ResultScreen extends StatelessWidget {
                           BarChartRodData(
                             toY: values[index],
                             color: kPrimaryColor,
-                            width: 16, // 棒の太さ
+                            width: 24,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ],
@@ -134,8 +129,6 @@ class ResultScreen extends StatelessWidget {
        ],
     );
   }
-  // --- ここまで追加 ---
-
 
   Widget _buildPerformanceDetails(BuildContext context) {
     return Column(
@@ -156,7 +149,7 @@ class ResultScreen extends StatelessWidget {
               _buildDetailItem(
                 icon: Icons.check_circle,
                 title: "フォーム評価",
-                subtitle: "完璧！フォームが安定していましたね！",
+                subtitle: "85点！ フォームが安定していました！",
               ),
               Divider(color: Colors.grey[800], height: 1),
               _buildDetailItem(
@@ -238,5 +231,4 @@ class ResultScreen extends StatelessWidget {
     );
   }
 }
-
 

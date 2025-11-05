@@ -1,42 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpodをインポート
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme.dart';
-import 'widgets/bottom_nav_bar.dart';
 
-// 選択中のタブを管理するためのProvider (Riverpod)
-final selectedPeriodProvider = StateProvider<String>((ref) => '日'); // 初期値を '日' に
+final selectedPeriodProvider = StateProvider<String>((ref) => '日');
 
-class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidgetに変更
+class MyDataScreen extends ConsumerWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) { // WidgetRef ref を追加
-    final selectedPeriod = ref.watch(selectedPeriodProvider); // 現在選択中のタブを取得
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Stack(
+        child: ListView(
+          padding: EdgeInsets.only(bottom: 100),
           children: [
-            ListView(
-              padding: EdgeInsets.only(bottom: 100),
-              children: [
-                _buildAppBar(context),
-                _buildPeriodSelector(context, ref), // refを渡す
-                // 選択中のタブに応じて表示するグラフを切り替える
-                if (selectedPeriod == '日')
-                  _buildDailyWorkoutChart(context)
-                else // 週・月はとりあえずフォーム安定度グラフのまま
-                  _buildFormChart(context),
-                _buildHistoryHeader(context),
-                _buildHistoryList(context),
-              ],
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: BottomNavBar(currentIndex: 2),
-            ),
+            _buildAppBar(context),
+            _buildPeriodSelector(context, ref),
+            if (selectedPeriod == '日')
+              _buildDailyWorkoutChart(context)
+            else if (selectedPeriod == '週')
+              _buildFormChart(context)
+            else
+              _buildMonthlyLoadChart(context),
+            _buildHistoryHeader(context),
+            _buildHistoryList(context),
           ],
         ),
       ),
@@ -57,10 +46,9 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
     );
   }
 
-  // WidgetRef ref を引数に追加
   Widget _buildPeriodSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedPeriod = ref.watch(selectedPeriodProvider); // 現在選択中のタブを取得
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -72,7 +60,6 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
         ),
         child: Row(
           children: [
-            // タブを「日・週・月」に変更
             _buildPeriodButton(context, ref, "日", selectedPeriod == "日"),
             _buildPeriodButton(context, ref, "週", selectedPeriod == "週"),
             _buildPeriodButton(context, ref, "月", selectedPeriod == "月"),
@@ -82,22 +69,20 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
     );
   }
 
-  // WidgetRef ref を引数に追加し、タップ時の処理を追加
   Widget _buildPeriodButton(BuildContext context, WidgetRef ref, String text, bool isSelected) {
     return Expanded(
-      child: GestureDetector( // タップ可能にする
+      child: GestureDetector(
         onTap: () {
-          // タップされたら選択中のタブを更新する (Riverpod)
           ref.read(selectedPeriodProvider.notifier).state = text;
         },
-        child: Container( // Containerで囲んでタップ範囲を広げる
+        child: Container(
           decoration: isSelected
               ? BoxDecoration(
                   color: kPrimaryColor,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: Offset(0, 2))],
                 )
-              : null, // 非選択時は色なし
+              : null,
           child: Center(
             child: Text(
               text,
@@ -112,7 +97,6 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
     );
   }
 
-  // --- ResultScreenからコピーしてきた「日のグラフ」 ---
   Widget _buildDailyWorkoutChart(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
@@ -131,8 +115,6 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
       child: Column(
          crossAxisAlignment: CrossAxisAlignment.start,
          children: [
-            // Text("今日の運動量", style: Theme.of(context).textTheme.titleMedium), // タイトルは不要かも
-            // SizedBox(height: 8),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -201,11 +183,8 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
       ),
     );
   }
-  // --- ここまで追加 ---
 
-  // 元々あったフォーム安定度グラフ (週・月で使う)
   Widget _buildFormChart(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Card(
@@ -214,7 +193,7 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("フォーム安定度の推移", style: Theme.of(context).textTheme.titleMedium),
+              Text("フォーム安定度の推移 (週)", style: Theme.of(context).textTheme.titleMedium),
               SizedBox(height: 8),
               Text("85 点", style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
               SizedBox(height: 24),
@@ -257,6 +236,51 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
     );
   }
 
+  Widget _buildMonthlyLoadChart(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("月別 負荷の推移 (ダミー)", style: Theme.of(context).textTheme.titleMedium),
+              SizedBox(height: 8),
+              Text("MAX 85 kg", style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+              SizedBox(height: 24),
+              Container(
+                height: 150,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: false),
+                    titlesData: FlTitlesData(show: false),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: [
+                          FlSpot(0, 2.5), FlSpot(1, 3.5), FlSpot(2, 3.0), FlSpot(3, 4.0),
+                          FlSpot(4, 4.2), FlSpot(5, 4.0), FlSpot(6, 4.5), FlSpot(7, 4.8),
+                        ],
+                        isCurved: false,
+                        color: kHighlight,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(show: true),
+                        belowBarData: BarAreaData(show: false),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildHistoryHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -265,7 +289,7 @@ class MyDataScreen extends ConsumerWidget { // StatelessWidgetからConsumerWidg
   }
 
   Widget _buildHistoryList(BuildContext context) {
-    final history = [
+    final List<Map<String, String>> history = [
       {"title": "スクワット", "desc": "50kg, 10回 x 3セット"},
       {"title": "ベンチプレス", "desc": "60kg, 8回 x 3セット"},
       {"title": "デッドリフト", "desc": "80kg, 5回 x 3セット"},

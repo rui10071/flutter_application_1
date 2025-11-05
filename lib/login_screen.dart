@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'main_screen.dart';
+import 'theme.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   @override
@@ -15,56 +18,73 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuB73AL1PrKE6BlVWRrE6_7nu2zNita5A_qkkcviqvO8M_bRe-b9wPKL2dsiieotdU8mHzJ-Bd-h_xSI-zfbfR0G4lVqL8DLW78t18pKDDWgJEtFQOyf-ijMWIPg3h6fLPwsr2UEcSc3GDR84AsmVeUkBzuIAP1fjVPaQXd_r2A_ZYyVUmjJ0dGzi24SliC4s-X-l8zI7SHJnrlj7zSVWttFGUJ8JQmwx_stGQMXhfv8Xc2AZnWXNqiof-wre2-B6WpUmezhiyUay4s",
-                  height: 64,
-                  width: 64,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.0),
+                  child: Image.asset(
+                    "assets/images/burpee.jpg",
+                    height: 64,
+                    width: 64,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 SizedBox(height: 24),
                 Text(
-                  "おかえりなさい",
+                  "ようこそ",
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 32),
-                _buildTextField(
+                SizedBox(height: 8),
+                Text(
+                  "AIフォームトレーナーへ",
+                  style: theme.textTheme.titleMedium?.copyWith(color: kTextDarkSecondary),
+                ),
+                SizedBox(height: 48),
+                
+                _buildSocialButton(
                   context,
-                  label: "メールアドレス",
-                  value: "kenta.tanaka@example.com",
+                  text: "Googleでログイン",
+                  iconUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg",
                   isDark: isDark,
+                  onPressed: () {
+                     Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainScreen()),
+                    );
+                  }
                 ),
                 SizedBox(height: 16),
-                _buildTextField(
+                _buildSocialButton(
                   context,
-                  label: "パスワード",
-                  value: "dummyPassword",
+                  text: "Appleでログイン",
+                  iconUrl: "https://upload.wikimedia.org/wikipedia/commons/3/31/Apple_logo_white.svg",
                   isDark: isDark,
-                  isPassword: true,
-                ),
-                SizedBox(height: 32),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Lexend'),
-                  ),
+                  isApple: true,
                   onPressed: () {
-                    Navigator.pushReplacement(
+                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      MaterialPageRoute(builder: (context) => MainScreen()),
+                    );
+                  }
+                ),
+                
+                SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SignUpScreen()),
                     );
                   },
-                  child: Text("ログイン"),
+                  child: Text(
+                    "アカウントをお持ちでないですか？ 新規登録",
+                    style: TextStyle(color: theme.primaryColor, fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
                 ),
                 SizedBox(height: 16),
                 TextButton(
                   onPressed: () {},
                   child: Text(
-                    "パスワードを忘れましたか？",
-                    style: TextStyle(color: theme.primaryColor, fontSize: 14),
+                    "利用規約とプライバシーポリシー",
+                    style: TextStyle(color: kTextDarkSecondary, fontSize: 12),
                   ),
                 ),
               ],
@@ -75,33 +95,33 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(BuildContext context, {required String label, required String value, required bool isDark, bool isPassword = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-          ),
+  Widget _buildSocialButton(BuildContext context, {required String text, required String iconUrl, required bool isDark, bool isApple = false, required VoidCallback onPressed}) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isApple ? Colors.black : (isDark ? Colors.grey[800] : Colors.grey[100]),
+        foregroundColor: isApple ? Colors.white : (isDark ? Colors.white : Colors.black),
+        minimumSize: Size(double.infinity, 56),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+          side: isApple ? BorderSide.none : BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!, width: 1)
         ),
-        SizedBox(height: 8),
-        TextFormField(
-          initialValue: value,
-          obscureText: isPassword,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        elevation: 0,
+        textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Lexend'),
+      ),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.network(
+            iconUrl, 
+            height: 24, 
+            width: 24, 
+            color: isApple ? Colors.white : null
           ),
-        ),
-      ],
+          SizedBox(width: 12),
+          Text(text),
+        ],
+      ),
     );
   }
 }

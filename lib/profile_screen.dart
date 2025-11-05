@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'theme.dart';
-import 'widgets/bottom_nav_bar.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -9,23 +8,13 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Stack(
+        child: ListView(
+          padding: EdgeInsets.only(bottom: 100),
           children: [
-            ListView(
-              padding: EdgeInsets.only(bottom: 100),
-              children: [
-                _buildAppBar(context),
-                _buildUserInfo(context),
-                _buildStats(context),
-                _buildSettingsList(context),
-              ],
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: BottomNavBar(currentIndex: 3),
-            ),
+            _buildAppBar(context),
+            _buildUserInfo(context),
+            _buildStats(context),
+            _buildSettingsList(context),
           ],
         ),
       ),
@@ -53,7 +42,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 48,
-            backgroundImage: NetworkImage("https://lh3.googleusercontent.com/a/ACg8ocL8H-js-L2B5-ylkGk22otY83f-hO9a-b-T7-Z-y-8h=s96-c"),
+            backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
           ),
           SizedBox(height: 16),
           Text("田中 健太", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
@@ -175,5 +164,4 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
-
 
