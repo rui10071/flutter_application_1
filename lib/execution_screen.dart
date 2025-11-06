@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
 import 'result_screen.dart';
 import 'dart:async';
 import 'dart:math';
 import 'pose_frame.dart';
+import 'main_screen.dart';
 
-class ExecutionScreen extends StatefulWidget {
+class ExecutionScreen extends ConsumerStatefulWidget {
   @override
   _ExecutionScreenState createState() => _ExecutionScreenState();
 }
 
-class _ExecutionScreenState extends State<ExecutionScreen> {
+class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
   late StreamController<PoseFrame> _streamController;
   late Stream<PoseFrame> _poseStream;
   late Timer _mockTimer;

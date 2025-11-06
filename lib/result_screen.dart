@@ -1,41 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart'; 
 import 'theme.dart';
-import 'widgets/bottom_nav_bar.dart';
+import 'main_screen.dart';
 
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: kBackgroundDark,
-      body: Stack(
+      appBar: AppBar(
+        backgroundColor: kBackgroundDark,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.close, color: Colors.white),
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+              ref.read(mainNavIndexProvider.notifier).state = 2;
+            },
+          ),
+        ],
+      ),
+      body: ListView( 
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 100),
         children: [
-          SafeArea(
-            bottom: false,
-            child: ListView( 
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 100),
-              children: [
-                SizedBox(height: 40),
-                Text(
-                  "素晴らしいトレーニングでした！",
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 32),
-                _buildDailyWorkoutChart(context), 
-                SizedBox(height: 32),
-                _buildPerformanceDetails(context),
-                SizedBox(height: 24),
-                _buildMemoSection(context),
-              ],
-            ),
+          SizedBox(height: 20),
+          Text(
+            "素晴らしいトレーニングでした！",
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: BottomNavBar(currentIndex: 2),
-          ),
+          SizedBox(height: 32),
+          _buildDailyWorkoutChart(context), 
+          SizedBox(height: 32),
+          _buildPerformanceDetails(context),
+          SizedBox(height: 24),
+          _buildMemoSection(context),
         ],
       ),
     );
