@@ -1,240 +1,213 @@
 import 'package:flutter/material.dart';
-import 'theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'theme.dart'; // kTextDarkSecondary, kPrimaryColor, kCardDark, kHighlight などの定義
 import 'login_screen.dart';
 import 'account_settings_screen.dart';
 import 'notification_settings_screen.dart';
 import 'help_support_screen.dart';
 import 'edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+// UserProfileとUserProfileNotifierは変更なし
+class UserProfile {
+  final String height;
+  final String weight;
+  final String age;
+  UserProfile({this.height = "175", this.weight = "68", this.age = "28"});
+
+  UserProfile copyWith({String? height, String? weight, String? age}) {
+    return UserProfile(
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      age: age ?? this.age,
+    );
+  }
+}
+
+class UserProfileNotifier extends StateNotifier<UserProfile> {
+  UserProfileNotifier() : super(UserProfile());
+
+  void updateHeight(String newHeight) {
+    state = state.copyWith(height: newHeight);
+  }
+
+  void updateWeight(String newWeight) {
+    state = state.copyWith(weight: newWeight);
+  }
+}
+
+final userProfileProvider = StateNotifierProvider<UserProfileNotifier, UserProfile>((ref) {
+  return UserProfileNotifier();
+});
+
+class ProfileScreen extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context),
-          SliverList(
-            delegate: SliverChildListDelegate([
-              _buildSectionTitle(context, "ステータス"),
-              _buildBodyMetrics(context),
-              _buildSectionTitle(context, "設定"),
-              _buildSettingsList(context),
-              SizedBox(height: 32),
-            ]),
-          ),
-        ],
+      extendBodyBehindAppBar: true, // AppBarの背後までbodyを拡張
+      appBar: AppBar(
+        backgroundColor: Colors.transparent, // AppBarの背景を透明に
+        elevation: 0, // 影をなくす
+        foregroundColor: Colors.white, // アイコンとテキストの色を白に（背景が暗い想定のため）
       ),
-    );
-  }
-
-  Widget _buildSliverAppBar(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return SliverAppBar(
-      expandedHeight: 220.0,
-      backgroundColor: theme.scaffoldBackgroundColor,
-      elevation: 0,
-      pinned: true,
-      stretch: true,
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: EdgeInsets.zero,
-        centerTitle: false,
-        title: _buildCollapsedHeader(context),
-        background: _buildExpandedHeader(context),
-      ),
-    );
-  }
-
-  Widget _buildCollapsedHeader(BuildContext context) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
-            ),
-            SizedBox(width: 12),
-            Text(
-              "田中 健太",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildExpandedHeader(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 40.0, bottom: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 48,
-              backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
-            ),
-            SizedBox(height: 12),
-            Text(
-              "田中 健太",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 4),
-            Text(
-              "kenta.tanaka@example.com",
-              style: TextStyle(fontSize: 14, color: kTextDarkSecondary),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              ),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
-              },
-              child: Text("プロフィールを編集", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 12, 
-          fontWeight: FontWeight.bold, 
-          color: kTextDarkSecondary,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBodyMetrics(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? kCardDark : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            _buildMetricTile(context, "身長", "175", "cm", true, () {
-              _showEditModal(context, "身長", "175", "cm");
-            }),
-            Divider(height: 1, indent: 16, endIndent: 16),
-            _buildMetricTile(context, "体重", "68", "kg", true, () {
-              _showEditModal(context, "体重", "68", "kg");
-            }),
-            Divider(height: 1, indent: 16, endIndent: 16),
-            _buildMetricTile(context, "年齢", "28", "歳", false, null),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricTile(BuildContext context, String label, String value, String unit, bool editable, VoidCallback? onTap) {
-    return ListTile(
-      title: Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      body: Stack(
         children: [
-          RichText(
-            text: TextSpan(
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: kTextDarkSecondary),
-              children: [
-                TextSpan(text: value, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
-                TextSpan(text: " $unit", style: TextStyle(fontSize: 14)),
-              ]
+          // 背景のグラデーション
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [kPrimaryColor, Theme.of(context).scaffoldBackgroundColor], // kPrimaryColorから背景色へ
+                stops: [0.0, 0.4], // グラデーションの開始と終了位置
+              ),
             ),
           ),
-          if (editable) ...[
-            SizedBox(width: 8),
-            Icon(Icons.edit_outlined, size: 20, color: kTextDarkSecondary),
-          ]
-        ],
-      ),
-      onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    );
-  }
-
-  void _showEditModal(BuildContext context, String title, String initialValue, String unit) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // スクロール可能なコンテンツ
+          SafeArea(
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                Text("あなたの${title}を入力", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                SizedBox(height: 24),
-                TextField(
-                  controller: TextEditingController(text: initialValue),
-                  decoration: InputDecoration(
-                    labelText: title,
-                    suffixText: unit,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                ),
-                SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
-                    foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("保存する", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
-                ),
+                _buildHeaderSection(context),
+                _buildBodyMetricsSection(context, ref),
+                _buildSettingsSection(context),
+                _buildLogoutSection(context),
+                SizedBox(height: 32),
               ],
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Widget _buildSettingsList(BuildContext context) {
+  // ヘッダーセクション（アバター、名前、メール、編集ボタン）
+  Widget _buildHeaderSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
+            backgroundColor: Colors.white.withOpacity(0.8), // アバターの背景色
+          ),
+          SizedBox(height: 16),
+          Text(
+            "田中 健太",
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white, // 名前を白に
+                ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            "kenta.tanaka@example.com",
+            style: TextStyle(fontSize: 14, color: Colors.white70), // メールアドレスを薄い白に
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.2), // 半透明の白ボタン
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
+            },
+            icon: Icon(Icons.edit_outlined, size: 20),
+            label: Text("プロフィールを編集", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ボディメトリクス（身長、体重、年齢）セクション
+  Widget _buildBodyMetricsSection(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(userProfileProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = isDark ? kCardDark : Colors.white;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle(context, "ステータス"),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildMetricCard(context, ref, "身長", userProfile.height, "cm")),
+              SizedBox(width: 16),
+              Expanded(child: _buildMetricCard(context, ref, "体重", userProfile.weight, "kg")),
+              SizedBox(width: 16),
+              Expanded(child: _buildMetricCard(context, ref, "年齢", userProfile.age, "歳", editable: false)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(BuildContext context, WidgetRef ref, String label, String value, String unit, {bool editable = true}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = isDark ? kCardDark : Colors.white;
+
+    return GestureDetector(
+      onTap: editable ? () => _showEditModal(context, ref, label, value, unit) : null,
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label, style: TextStyle(fontSize: 14, color: kTextDarkSecondary)),
+                if (editable) Icon(Icons.edit_outlined, size: 18, color: kTextDarkSecondary),
+              ],
+            ),
+            SizedBox(height: 8),
+            RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
+                children: [
+                  TextSpan(text: value),
+                  TextSpan(text: " $unit", style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: kTextDarkSecondary)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 設定セクション
+  Widget _buildSettingsSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color tileColor = isDark ? kCardDark : Colors.white;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSettingSection(
+          _buildSectionTitle(context, "設定"),
+          SizedBox(height: 12),
+          _buildSettingCard(
             context,
             tileColor,
             [
@@ -257,7 +230,7 @@ class ProfileScreen extends StatelessWidget {
             ]
           ),
           SizedBox(height: 16),
-          _buildSettingSection(
+          _buildSettingCard(
             context,
             tileColor,
             [
@@ -278,36 +251,69 @@ class ProfileScreen extends StatelessWidget {
               ),
             ]
           ),
-          SizedBox(height: 16),
-          _buildSettingSection(
-            context,
-            tileColor,
-            [
-              _buildSettingItem(
-                context, 
-                icon: Icons.logout, 
-                title: "ログアウト",
-                color: kHighlight,
-                onTap: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              ),
-            ]
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildSettingSection(BuildContext context, Color tileColor, List<Widget> children) {
+  // ログアウトセクション
+  Widget _buildLogoutSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color tileColor = isDark ? kCardDark : Colors.white;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: _buildSettingCard(
+        context,
+        tileColor,
+        [
+          _buildSettingItem(
+            context, 
+            icon: Icons.logout, 
+            title: "ログアウト",
+            color: kHighlight, // ログアウトは強調色で
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+                (route) => false,
+              );
+            }
+          ),
+        ]
+      ),
+    );
+  }
+
+  // 共通部品: セクションタイトル
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 13, 
+          fontWeight: FontWeight.bold, 
+          color: kTextDarkSecondary,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  // 共通部品: 設定カード（グループ化された設定項目）
+  Widget _buildSettingCard(BuildContext context, Color cardColor, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: tileColor,
-        borderRadius: BorderRadius.circular(12),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: ListView.separated(
         shrinkWrap: true,
@@ -315,19 +321,79 @@ class ProfileScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         itemCount: children.length,
         itemBuilder: (context, index) => children[index],
-        separatorBuilder: (context, index) => Divider(height: 1, indent: 56, endIndent: 16),
+        separatorBuilder: (context, index) => Divider(height: 1, indent: 56, endIndent: 16, color: Theme.of(context).dividerColor.withOpacity(0.5)),
       ),
     );
   }
 
+  // 共通部品: 設定項目（ListTile）
   Widget _buildSettingItem(BuildContext context, {required IconData icon, required String title, String? subtitle, Color? color, required VoidCallback onTap}) {
     return ListTile(
       leading: Icon(icon, color: color ?? kTextDarkSecondary),
       title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: color)),
-      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: kTextDarkSecondary)) : null,
+      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: kTextDarkSecondary, fontSize: 13)) : null,
       trailing: (color == null) ? Icon(Icons.chevron_right, color: kTextDarkSecondary) : null,
       onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      minLeadingWidth: 20, // leadingアイコンの最小幅
+    );
+  }
+
+  // 共通部品: 体重/身長編集モーダル
+  void _showEditModal(BuildContext context, WidgetRef ref, String title, String initialValue, String unit) {
+    final controller = TextEditingController(text: initialValue);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("あなたの${title}を入力", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                SizedBox(height: 24),
+                TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: title,
+                    suffixText: unit,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    if (title == "身長") {
+                      ref.read(userProfileProvider.notifier).updateHeight(controller.text);
+                    } else if (title == "体重") {
+                      ref.read(userProfileProvider.notifier).updateWeight(controller.text);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Text("保存する", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

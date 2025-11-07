@@ -5,46 +5,48 @@ import 'details_screen.dart';
 import 'training_model.dart';
 import 'main_screen.dart';
 
+final selectedChipProvider = StateProvider<String>((ref) => "すべて");
+final searchQueryProvider = StateProvider<String>((ref) => "");
+
+final filteredTrainingProvider = Provider<List<TrainingMenu>>((ref) {
+  final selectedChip = ref.watch(selectedChipProvider);
+  final searchQuery = ref.watch(searchQueryProvider);
+
+  List<TrainingMenu> list = DUMMY_TRAININGS;
+
+  if (selectedChip != "すべて") {
+    list = list.where((menu) => menu.category == selectedChip).toList();
+  }
+
+  if (searchQuery.isNotEmpty) {
+    list = list.where((menu) =>
+      menu.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+      menu.description.toLowerCase().contains(searchQuery.toLowerCase())
+    ).toList();
+  }
+  
+  return list;
+});
+
 class SelectionScreen extends ConsumerStatefulWidget {
   @override
   _SelectionScreenState createState() => _SelectionScreenState();
 }
 
 class _SelectionScreenState extends ConsumerState<SelectionScreen> {
-  String _selectedChip = "すべて";
-  String _searchQuery = "";
-  List<TrainingMenu> _filteredList = DUMMY_TRAININGS;
   final TextEditingController _searchController = TextEditingController();
-
   final List<String> _chips = ["すべて", "上半身", "下半身", "コア", "ヨガ"];
 
   @override
-  void initState() {
-    super.initState();
-    _filterList();
-  }
-
-  void _filterList() {
-    List<TrainingMenu> list = DUMMY_TRAININGS;
-
-    if (_selectedChip != "すべて") {
-      list = list.where((menu) => menu.category == _selectedChip).toList();
-    }
-
-    if (_searchQuery.isNotEmpty) {
-      list = list.where((menu) =>
-        menu.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        menu.description.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
-    }
-
-    setState(() {
-      _filteredList = list;
-    });
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final _filteredList = ref.watch(filteredTrainingProvider);
+
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -52,9 +54,9 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
           children: [
             _buildAppBar(context, ref),
             _buildSearchBar(context),
-            _buildChips(),
+            _buildChips(context),
             Expanded(
-              child: _buildGrid(context),
+              child: _buildGrid(context, _filteredList),
             ),
           ],
         ),
@@ -83,29 +85,24 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
 
   Widget _buildSearchBar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
         controller: _searchController,
         onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
-          _filterList();
+          ref.read(searchQueryProvider.notifier).state = value;
         },
         decoration: InputDecoration(
           hintText: "トレーニングを検索",
           hintStyle: TextStyle(color: kTextDarkSecondary),
           prefixIcon: Icon(Icons.search, color: kTextDarkSecondary),
-          suffixIcon: _searchQuery.isNotEmpty
+          suffixIcon: ref.watch(searchQueryProvider).isNotEmpty
               ? IconButton(
                   icon: Icon(Icons.clear, color: kTextDarkSecondary),
                   onPressed: () {
                     _searchController.clear();
-                    setState(() {
-                      _searchQuery = "";
-                    });
-                    _filterList();
+                    ref.read(searchQueryProvider.notifier).state = "";
                   },
                 )
               : null,
@@ -121,7 +118,9 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     );
   }
 
-  Widget _buildChips() {
+  Widget _buildChips(BuildContext context) {
+    final _selectedChip = ref.watch(selectedChipProvider);
+
     return Container(
       height: 40,
       child: ListView.builder(
@@ -137,10 +136,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
               label: Text(chipName),
               selected: isSelected,
               onSelected: (selected) {
-                setState(() {
-                  _selectedChip = chipName;
-                });
-                _filterList();
+                ref.read(selectedChipProvider.notifier).state = chipName;
               },
               labelStyle: TextStyle(
                 color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
@@ -160,7 +156,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     );
   }
 
-  Widget _buildGrid(BuildContext context) {
+  Widget _buildGrid(BuildContext context, List<TrainingMenu> _filteredList) {
     if (_filteredList.isEmpty) {
       return Center(
         child: Text(

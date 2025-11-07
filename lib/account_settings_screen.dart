@@ -33,6 +33,29 @@ class AccountSettingsScreen extends StatelessWidget {
             ),
           ),
           SizedBox(height: 24),
+          _buildSectionTitle(context, "基本設定"),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(Icons.flag_outlined, color: kTextDarkSecondary),
+                  title: Text("フィットネス目標"),
+                  subtitle: Text("フォームを改善したい"),
+                  trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  onTap: () {},
+                ),
+                Divider(height: 1, indent: 16, endIndent: 16),
+                ListTile(
+                  leading: Icon(Icons.dark_mode_outlined, color: kTextDarkSecondary),
+                  title: Text("外観"),
+                  subtitle: Text("ダークテーマ"),
+                  trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 24),
           _buildSectionTitle(context, "連携サービス"),
           Card(
             child: Column(
@@ -52,6 +75,27 @@ class AccountSettingsScreen extends StatelessWidget {
                     child: Text("連携する"),
                     onPressed: () {},
                   ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 24),
+           _buildSectionTitle(context, "法務"),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(Icons.privacy_tip_outlined, color: kTextDarkSecondary),
+                  title: Text("プライバシーポリシー"),
+                  trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  onTap: () {},
+                ),
+                Divider(height: 1, indent: 16, endIndent: 16),
+                ListTile(
+                  leading: Icon(Icons.description_outlined, color: kTextDarkSecondary),
+                  title: Text("利用規約"),
+                  trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  onTap: () {},
                 ),
               ],
             ),

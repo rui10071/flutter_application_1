@@ -6,8 +6,13 @@ import 'dart:async';
 import 'dart:math';
 import 'pose_frame.dart';
 import 'main_screen.dart';
+import 'training_model.dart';
 
 class ExecutionScreen extends ConsumerStatefulWidget {
+  final TrainingMenu menu;
+
+  ExecutionScreen({required this.menu});
+
   @override
   _ExecutionScreenState createState() => _ExecutionScreenState();
 }
@@ -94,7 +99,7 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
       for (var key in points.keys) {
         if (key == feedback["errorPoint"]) {
           pointColors[key] = paintError;
-        } else if (['p4', 'p5', 'p1'].contains(key)) {
+        } else if (widget.menu.assistPivotKeys.contains(key)) {
           pointColors[key] = paintAssist;
         } else {
           pointColors[key] = paintOK;

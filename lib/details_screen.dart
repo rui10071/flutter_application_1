@@ -130,24 +130,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     ),
                   ),
                 ),
-                _buildSection(context, title: "鍛えられる部位 (3D)",
+                _buildSection(context, title: "鍛えられる部位",
                   child: Card(
                     child: Container(
-                      height: 200,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(Icons.threed_rotation, size: 80, color: kPrimaryColor.withOpacity(0.5)),
-                          Positioned(
-                            bottom: 16,
-                            child: Text("スワイプしてモデルを回転", style: TextStyle(color: kTextDarkSecondary)),
-                          ),
-                          Positioned(
-                            top: 16,
-                            right: 16,
-                            child: Icon(Icons.zoom_in, color: kTextDarkSecondary),
-                          )
-                        ],
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16.0),
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: widget.menu.targetBodyParts.map((part) {
+                          return Chip(
+                            label: Text(part),
+                            backgroundColor: kPrimaryColor.withOpacity(0.1),
+                            labelStyle: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500),
+                            side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ),
@@ -396,7 +394,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Lexend'),
           ),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
           },
           child: Text("トレーニング開始"),
         ),

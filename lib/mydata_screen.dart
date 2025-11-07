@@ -5,10 +5,34 @@ import 'theme.dart';
 
 final selectedPeriodProvider = StateProvider<String>((ref) => '週');
 
+final _dailySpots = [FlSpot(8, 75), FlSpot(9, 80), FlSpot(18, 70), FlSpot(19, 85)];
+final _weeklySpots = [FlSpot(0, 75), FlSpot(1, 80), FlSpot(2, 70), FlSpot(3, 85), FlSpot(4, 90), FlSpot(5, 88), FlSpot(6, 92)];
+final _monthlySpots = [FlSpot(0, 80), FlSpot(3, 85), FlSpot(7, 75), FlSpot(10, 80), FlSpot(15, 82), FlSpot(20, 88), FlSpot(25, 90), FlSpot(29, 85)];
+final _yearlySpots = [FlSpot(0, 60), FlSpot(1, 65), FlSpot(2, 70), FlSpot(3, 72), FlSpot(4, 75), FlSpot(5, 70), FlSpot(6, 78), FlSpot(7, 80), FlSpot(8, 75), FlSpot(9, 80), FlSpot(10, 85), FlSpot(11, 80)];
+
+final _dailyLabels = {0: '0時', 6: '6時', 12: '12時', 18: '18時', 23: '24時'};
+final _weeklyLabels = {0: '月', 1: '火', 2: '水', 3: '木', 4: '金', 5: '土', 6: '日'};
+final _monthlyLabels = {0: '1日', 7: '8日', 14: '15日', 21: '22日', 29: '30日'};
+final _yearlyLabels = {0: '1月', 2: '3月', 4: '5月', 6: '7月', 8: '9月', 10: '11月'};
+
+final chartDataProvider = Provider((ref) {
+  final period = ref.watch(selectedPeriodProvider);
+  switch (period) {
+    case '日':
+      return (title: "フォーム安定度 (本日)", avg: "平均 78 点", spots: _dailySpots, labels: _dailyLabels, interval: 6.0, showDots: true);
+    case '月':
+      return (title: "フォーム安定度 (今月)", avg: "平均 82 点", spots: _monthlySpots, labels: _monthlyLabels, interval: 7.0, showDots: false);
+    case '年':
+      return (title: "フォーム安定度 (今年)", avg: "平均 75 点", spots: _yearlySpots, labels: _yearlyLabels, interval: 2.0, showDots: true);
+    case '週':
+    default:
+      return (title: "フォーム安定度 (今週)", avg: "平均 85 点", spots: _weeklySpots, labels: _weeklyLabels, interval: 1.0, showDots: true);
+  }
+});
+
 class MyDataScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedPeriod = ref.watch(selectedPeriodProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
 
@@ -22,7 +46,7 @@ class MyDataScreen extends ConsumerWidget {
             _buildPeriodSelector(context, ref),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: _buildChartCard(context, selectedPeriod, textColor),
+              child: _buildChartCard(context, ref, textColor),
             ),
             _buildHistoryHeader(context),
             _buildHistoryList(context),
@@ -96,34 +120,33 @@ class MyDataScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildChartCard(BuildContext context, String period, Color textColor) {
-    String title;
-    String averageValue;
-    LineChartData chartData;
+  Widget _buildChartCard(BuildContext context, WidgetRef ref, Color textColor) {
+    final data = ref.watch(chartDataProvider);
 
-    switch (period) {
-      case '日':
-        title = "フォーム安定度 (本日)";
-        averageValue = "平均 78 点";
-        chartData = _buildDailyChart(textColor);
-        break;
-      case '月':
-        title = "フォーム安定度 (今月)";
-        averageValue = "平均 82 点";
-        chartData = _buildMonthlyChart(textColor);
-        break;
-      case '年':
-        title = "フォーム安定度 (今年)";
-        averageValue = "平均 75 点";
-        chartData = _buildYearlyChart(textColor);
-        break;
-      case '週':
-      default:
-        title = "フォーム安定度 (今週)";
-        averageValue = "平均 85 点";
-        chartData = _buildWeeklyChart(textColor);
-        break;
-    }
+    final lineChartData = LineChartData(
+      minY: 0,
+      maxY: 100,
+      gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
+      titlesData: FlTitlesData(
+        show: true,
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        leftTitles: _buildYAxis(textColor, "点"),
+        bottomTitles: _buildXAxis(textColor, data.labels, interval: data.interval),
+      ),
+      borderData: FlBorderData(show: false),
+      lineBarsData: [
+        LineChartBarData(
+          spots: data.spots,
+          isCurved: true,
+          color: kPrimaryColor,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: FlDotData(show: data.showDots),
+          belowBarData: _buildChartBelowBar(),
+        ),
+      ],
+    );
 
     return Card(
       child: Padding(
@@ -131,154 +154,17 @@ class MyDataScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(data.title, style: Theme.of(context).textTheme.titleMedium),
             SizedBox(height: 8),
-            Text(averageValue, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(data.avg, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 24),
             Container(
               height: 150,
-              child: LineChart(chartData),
+              child: LineChart(lineChartData),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  LineChartData _buildDailyChart(Color textColor) {
-    return LineChartData(
-      minY: 0,
-      maxY: 100,
-      gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
-      titlesData: FlTitlesData(
-        show: true,
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        leftTitles: _buildYAxis(textColor, "点"),
-        bottomTitles: _buildXAxis(textColor, {
-          0: '0時', 6: '6時', 12: '12時', 18: '18時', 23: '24時',
-        }),
-      ),
-      borderData: FlBorderData(show: false),
-      lineBarsData: [
-        LineChartBarData(
-          spots: [
-            FlSpot(8, 75),
-            FlSpot(9, 80),
-            FlSpot(18, 70),
-            FlSpot(19, 85),
-          ],
-          isCurved: true,
-          color: kPrimaryColor,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: true),
-          belowBarData: _buildChartBelowBar(),
-        ),
-      ],
-    );
-  }
-
-  LineChartData _buildWeeklyChart(Color textColor) {
-    return LineChartData(
-      minY: 0,
-      maxY: 100,
-      gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
-      titlesData: FlTitlesData(
-        show: true,
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        leftTitles: _buildYAxis(textColor, "点"),
-        bottomTitles: _buildXAxis(textColor, {
-          0: '月', 1: '火', 2: '水', 3: '木', 4: '金', 5: '土', 6: '日',
-        }),
-      ),
-      borderData: FlBorderData(show: false),
-      lineBarsData: [
-        LineChartBarData(
-          spots: [
-            FlSpot(0, 75),
-            FlSpot(1, 80),
-            FlSpot(2, 70),
-            FlSpot(3, 85),
-            FlSpot(4, 90),
-            FlSpot(5, 88),
-            FlSpot(6, 92),
-          ],
-          isCurved: true,
-          color: kPrimaryColor,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: true),
-          belowBarData: _buildChartBelowBar(),
-        ),
-      ],
-    );
-  }
-
-  LineChartData _buildMonthlyChart(Color textColor) {
-    return LineChartData(
-      minY: 0,
-      maxY: 100,
-      gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
-      titlesData: FlTitlesData(
-        show: true,
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        leftTitles: _buildYAxis(textColor, "点"),
-        bottomTitles: _buildXAxis(textColor, {
-          0: '1日', 7: '8日', 14: '15日', 21: '22日', 29: '30日',
-        }),
-      ),
-      borderData: FlBorderData(show: false),
-      lineBarsData: [
-        LineChartBarData(
-          spots: [
-            FlSpot(0, 80), FlSpot(3, 85), FlSpot(7, 75), FlSpot(10, 80),
-            FlSpot(15, 82), FlSpot(20, 88), FlSpot(25, 90), FlSpot(29, 85),
-          ],
-          isCurved: true,
-          color: kPrimaryColor,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: false),
-          belowBarData: _buildChartBelowBar(),
-        ),
-      ],
-    );
-  }
-
-  LineChartData _buildYearlyChart(Color textColor) {
-    return LineChartData(
-      minY: 0,
-      maxY: 100,
-      gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
-      titlesData: FlTitlesData(
-        show: true,
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        leftTitles: _buildYAxis(textColor, "点"),
-        bottomTitles: _buildXAxis(textColor, {
-          0: '1月', 1: '2月', 2: '3月', 3: '4月', 4: '5月', 5: '6月',
-          6: '7月', 7: '8月', 8: '9月', 9: '10月', 10: '11月', 11: '12月',
-        }, interval: 2),
-      ),
-      borderData: FlBorderData(show: false),
-      lineBarsData: [
-        LineChartBarData(
-          spots: [
-            FlSpot(0, 60), FlSpot(1, 65), FlSpot(2, 70), FlSpot(3, 72),
-            FlSpot(4, 75), FlSpot(5, 70), FlSpot(6, 78), FlSpot(7, 80),
-            FlSpot(8, 75), FlSpot(9, 80), FlSpot(10, 85), FlSpot(11, 80),
-          ],
-          isCurved: false,
-          color: kPrimaryColor,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: true),
-          belowBarData: _buildChartBelowBar(),
-        ),
-      ],
     );
   }
 

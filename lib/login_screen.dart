@@ -12,83 +12,82 @@ class LoginScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
-                  child: Image.asset(
-                    "assets/images/burpee.jpg",
-                    height: 64,
-                    width: 64,
-                    fit: BoxFit.cover,
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              Spacer(flex: 2), 
+              
+              Image.asset(
+                "assets/images/Benchpress_logo.jpg",
+                height: 340, 
+                width: 340, 
+                fit: BoxFit.contain,
+              ),
+              SizedBox(height: 24),
+              Text(
+                "ようこそ",
+                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "MIRRORSENSEへ",
+                style: theme.textTheme.titleLarge?.copyWith(color: kTextDarkSecondary),
+              ),
+              
+              Spacer(flex: 3), 
+              
+              _buildSocialButton(
+                context,
+                text: "Googleでログイン",
+                iconUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg",
+                isDark: isDark,
+                onPressed: () {
+                   Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => MainScreen()),
+                  );
+                }
+              ),
+              SizedBox(height: 16),
+              _buildSocialButton(
+                context,
+                text: "Appleでログイン",
+                iconUrl: "https://upload.wikimedia.org/wikipedia/commons/3/31/Apple_logo_white.svg",
+                isDark: isDark,
+                isApple: true,
+                onPressed: () {
+                   Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => MainScreen()),
+                  );
+                }
+              ),
+              
+              Spacer(flex: 2), 
+              
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SignUpScreen()),
+                  );
+                },
+                child: Text(
+                  "アカウントをお持ちでないですか？ 新規登録",
+                  style: TextStyle(color: theme.primaryColor, fontSize: 14, fontWeight: FontWeight.w500),
                 ),
-                SizedBox(height: 24),
-                Text(
-                  "ようこそ",
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              TextButton(
+                onPressed: () {},
+                child: Text(
+                  "利用規約とプライバシーポリシー",
+                  style: TextStyle(color: kTextDarkSecondary, fontSize: 12),
                 ),
-                SizedBox(height: 8),
-                Text(
-                  "AIフォームトレーナーへ",
-                  style: theme.textTheme.titleMedium?.copyWith(color: kTextDarkSecondary),
-                ),
-                SizedBox(height: 48),
-                
-                _buildSocialButton(
-                  context,
-                  text: "Googleでログイン",
-                  iconUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg",
-                  isDark: isDark,
-                  onPressed: () {
-                     Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => MainScreen()),
-                    );
-                  }
-                ),
-                SizedBox(height: 16),
-                _buildSocialButton(
-                  context,
-                  text: "Appleでログイン",
-                  iconUrl: "https://upload.wikimedia.org/wikipedia/commons/3/31/Apple_logo_white.svg",
-                  isDark: isDark,
-                  isApple: true,
-                  onPressed: () {
-                     Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => MainScreen()),
-                    );
-                  }
-                ),
-                
-                SizedBox(height: 24),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SignUpScreen()),
-                    );
-                  },
-                  child: Text(
-                    "アカウントをお持ちでないですか？ 新規登録",
-                    style: TextStyle(color: theme.primaryColor, fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    "利用規約とプライバシーポリシー",
-                    style: TextStyle(color: kTextDarkSecondary, fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              SizedBox(height: 16), 
+            ],
           ),
         ),
       ),

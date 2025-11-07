@@ -7,13 +7,16 @@ class TrainingMenu {
   final String category;
   final String duration;
   final String difficulty;
-  final String imagePath; // URL または Assetパス
-  final bool isAsset; // trueならImage.asset, falseならImage.network
+  final String imagePath; 
+  final bool isAsset; 
   final String videoUrl;
   final String overview;
   final List<String> howTo;
   final List<String> tips;
   final String requiredAngle;
+  final List<String> mainPivotKeys;
+  final List<String> assistPivotKeys;
+  final List<String> targetBodyParts;
 
   TrainingMenu({
     required this.id,
@@ -23,17 +26,20 @@ class TrainingMenu {
     required this.duration,
     required this.difficulty,
     required this.imagePath,
-    this.isAsset = false, // デフォルトはfalse (network)
+    this.isAsset = false, 
     required this.videoUrl,
     required this.overview,
     required this.howTo,
     required this.tips,
     required this.requiredAngle,
+    required this.mainPivotKeys,
+    required this.assistPivotKeys,
+    required this.targetBodyParts,
   });
 }
 
 final List<TrainingMenu> DUMMY_TRAININGS = [
-  // ===== 5つは Image.network (isAsset: false) =====
+  
   TrainingMenu(
     id: "pushup",
     title: "プッシュアップ",
@@ -56,6 +62,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "動作はゆっくりと、筋肉の収縮を意識しながら行いましょう。",
     ],
     requiredAngle: "正面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["大胸筋", "上腕三頭筋", "三角筋"],
   ),
   TrainingMenu(
     id: "yoga",
@@ -79,6 +88,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "呼吸を止めないように意識してください。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["全身", "ハムストリングス", "背中"],
   ),
   TrainingMenu(
     id: "squat",
@@ -102,6 +114,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "背中が丸まらないように、常に胸を張ってください。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["大腿四頭筋", "大臀筋", "ハムストリングス"],
   ),
   TrainingMenu(
     id: "plank",
@@ -125,6 +140,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "呼吸は自然に続けてください。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["腹直筋", "体幹", "腹横筋"],
   ),
   TrainingMenu(
     id: "legraise",
@@ -148,9 +166,12 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "足の力ではなく、腹筋の力で足を動かすことを意識してください。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["腹直筋（下部）", "腸腰筋"],
   ),
   
-  // ===== 10つは Image.asset (isAsset: true) =====
+  
   TrainingMenu(
     id: "hiit",
     title: "全身HIIT",
@@ -174,6 +195,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "休憩時間も正確に守りましょう。",
     ],
     requiredAngle: "正面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["全身", "心肺機能"],
   ),
   TrainingMenu(
     id: "lunge",
@@ -197,6 +221,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "前の膝がつま先より前に出ないように注意してください。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["大腿四頭筋", "大臀筋"],
   ),
   TrainingMenu(
     id: "crunch",
@@ -220,6 +247,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "腰が床から浮かないように注意してください。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["腹直筋（上部）"],
   ),
   TrainingMenu(
     id: "pullup",
@@ -243,6 +273,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "体を下ろす時も力を抜かず、ゆっくりとコントロールします。",
     ],
     requiredAngle: "背面",
+    mainPivotKeys: ["p2", "p3"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["広背筋", "僧帽筋", "上腕二頭筋"],
   ),
   TrainingMenu(
     id: "downdog",
@@ -266,6 +299,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "膝は無理に伸ばせず、少し曲げても構いません。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["ハムストリングス", "ふくらはぎ", "背中"],
   ),
   TrainingMenu(
     id: "burpee",
@@ -290,6 +326,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "着地の際は、膝や足首に負担がかからないよう柔らかく着地します。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["全身", "心肺機能", "大胸筋"],
   ),
   TrainingMenu(
     id: "benchpress",
@@ -313,6 +352,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "手首が反らないように、しっかりとバーを握ってください。",
     ],
     requiredAngle: "正面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["大胸筋", "上腕三頭筋", "三角筋"],
   ),
   TrainingMenu(
     id: "deadlift",
@@ -337,6 +379,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "バーは常に体の近くを通るように意識しましょう。",
     ],
     requiredAngle: "側面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["広背筋", "脊柱起立筋", "大臀筋", "ハムストリングス"],
   ),
   TrainingMenu(
     id: "sideplank",
@@ -360,6 +405,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "上の手は腰に当てるか、天井に向かって伸ばします。",
     ],
     requiredAngle: "正面",
+    mainPivotKeys: ["p6", "p7", "p8"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["腹斜筋", "中臀筋"],
   ),
   TrainingMenu(
     id: "shoulderstretch",
@@ -383,6 +431,9 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
       "反動をつけずに、じわじわと伸ばしてください。",
     ],
     requiredAngle: "正面",
+    mainPivotKeys: ["p2", "p3"],
+    assistPivotKeys: ["p4", "p5"],
+    targetBodyParts: ["三角筋（後部）", "僧帽筋"],
   ),
 ];
 
