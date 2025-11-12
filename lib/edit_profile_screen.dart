@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
+import 'profile_screen.dart'; // Providerをインポート
 
-class EditProfileScreen extends StatelessWidget {
+class EditProfileScreen extends ConsumerStatefulWidget {
+  @override
+  _EditProfileScreenState createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    final userProfile = ref.read(userProfileProvider);
+    _nameController = TextEditingController(text: userProfile.name);
+    _emailController = TextEditingController(text: userProfile.email);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -14,6 +39,7 @@ class EditProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8.0),
             child: TextButton(
               onPressed: () {
+                ref.read(userProfileProvider.notifier).updateName(_nameController.text);
                 Navigator.pop(context);
               },
               child: Text("保存", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 16)),
@@ -50,7 +76,7 @@ class EditProfileScreen extends StatelessWidget {
           ),
           SizedBox(height: 32),
           TextField(
-            controller: TextEditingController(text: "田中 健太"),
+            controller: _nameController,
             decoration: InputDecoration(
               labelText: "名前",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -58,23 +84,13 @@ class EditProfileScreen extends StatelessWidget {
           ),
           SizedBox(height: 16),
           TextField(
-            controller: TextEditingController(text: "@kenta-tanaka"),
+            controller: _emailController,
             enabled: false,
             decoration: InputDecoration(
-              labelText: "ユーザーID",
+              labelText: "メールアドレス",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Theme.of(context).disabledColor.withOpacity(0.05),
-            ),
-          ),
-          SizedBox(height: 16),
-          TextField(
-            controller: TextEditingController(text: "フィットネス愛好家です。フォーム改善のために頑張っています！"),
-            maxLines: 4,
-            decoration: InputDecoration(
-              labelText: "自己紹介",
-              alignLabelWithHint: true,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],

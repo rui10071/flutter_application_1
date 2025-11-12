@@ -1,24 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'theme.dart'; // kTextDarkSecondary, kPrimaryColor, kCardDark, kHighlight などの定義
+import 'theme.dart';
 import 'login_screen.dart';
 import 'account_settings_screen.dart';
 import 'notification_settings_screen.dart';
 import 'help_support_screen.dart';
 import 'edit_profile_screen.dart';
+import 'onboarding_goal_screen.dart'; 
+import 'version_info_screen.dart'; // バージョン情報画面をインポート
 
-// UserProfileとUserProfileNotifierは変更なし
 class UserProfile {
+  final String name;
+  final String email;
   final String height;
   final String weight;
   final String age;
-  UserProfile({this.height = "175", this.weight = "68", this.age = "28"});
+  final String goal;
 
-  UserProfile copyWith({String? height, String? weight, String? age}) {
+  UserProfile({
+    this.name = "田中 健太",
+    this.email = "kenta.tanaka@example.com",
+    this.height = "175", 
+    this.weight = "68", 
+    this.age = "28", 
+    this.goal = "フォームを改善したい"
+  });
+
+  UserProfile copyWith({String? name, String? email, String? height, String? weight, String? age, String? goal}) {
     return UserProfile(
+      name: name ?? this.name,
+      email: email ?? this.email,
       height: height ?? this.height,
       weight: weight ?? this.weight,
       age: age ?? this.age,
+      goal: goal ?? this.goal,
     );
   }
 }
@@ -26,12 +41,24 @@ class UserProfile {
 class UserProfileNotifier extends StateNotifier<UserProfile> {
   UserProfileNotifier() : super(UserProfile());
 
+  void updateName(String newName) {
+    state = state.copyWith(name: newName);
+  }
+
   void updateHeight(String newHeight) {
     state = state.copyWith(height: newHeight);
   }
 
   void updateWeight(String newWeight) {
     state = state.copyWith(weight: newWeight);
+  }
+
+  void updateAge(String newAge) {
+    state = state.copyWith(age: newAge);
+  }
+
+  void updateGoal(String newGoal) {
+    state = state.copyWith(goal: newGoal);
   }
 }
 
@@ -42,33 +69,37 @@ final userProfileProvider = StateNotifierProvider<UserProfileNotifier, UserProfi
 class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      extendBodyBehindAppBar: true, // AppBarの背後までbodyを拡張
+      extendBodyBehindAppBar: true, 
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // AppBarの背景を透明に
-        elevation: 0, // 影をなくす
-        foregroundColor: Colors.white, // アイコンとテキストの色を白に（背景が暗い想定のため）
+        backgroundColor: Colors.transparent, 
+        elevation: 0, 
+        foregroundColor: isDark ? Colors.white : kTextLight, 
       ),
       body: Stack(
         children: [
-          // 背景のグラデーション
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [kPrimaryColor, Theme.of(context).scaffoldBackgroundColor], // kPrimaryColorから背景色へ
-                stops: [0.0, 0.4], // グラデーションの開始と終了位置
+                colors: isDark 
+                  ? [kPrimaryColor, theme.scaffoldBackgroundColor] 
+                  : [kPrimaryColor, theme.scaffoldBackgroundColor],
+                stops: [0.0, 0.4], 
               ),
             ),
           ),
-          // スクロール可能なコンテンツ
           SafeArea(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildHeaderSection(context),
+                _buildHeaderSection(context, ref),
                 _buildBodyMetricsSection(context, ref),
+                _buildGoalSection(context, ref),
                 _buildSettingsSection(context),
                 _buildLogoutSection(context),
                 SizedBox(height: 32),
@@ -80,8 +111,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // ヘッダーセクション（アバター、名前、メール、編集ボタン）
-  Widget _buildHeaderSection(BuildContext context) {
+  Widget _buildHeaderSection(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(userProfileProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
       child: Column(
@@ -89,28 +123,29 @@ class ProfileScreen extends ConsumerWidget {
           CircleAvatar(
             radius: 50,
             backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
-            backgroundColor: Colors.white.withOpacity(0.8), // アバターの背景色
+            backgroundColor: Colors.white.withOpacity(0.8), 
           ),
           SizedBox(height: 16),
           Text(
-            "田中 健太",
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            userProfile.name,
+            style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, // 名前を白に
+                  color: isDark ? Colors.white : kTextLight, 
                 ),
           ),
           SizedBox(height: 4),
           Text(
-            "kenta.tanaka@example.com",
-            style: TextStyle(fontSize: 14, color: Colors.white70), // メールアドレスを薄い白に
+            userProfile.email,
+            style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : kTextLightSecondary), 
           ),
           SizedBox(height: 24),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2), // 半透明の白ボタン
-              foregroundColor: Colors.white,
+              backgroundColor: isDark ? Colors.white.withOpacity(0.2) : kPrimaryColor.withOpacity(0.1), 
+              foregroundColor: isDark ? Colors.white : kPrimaryColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 0,
             ),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
@@ -122,15 +157,24 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+  
+  Widget _buildSectionContainer(BuildContext context, {required Widget child}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        border: isDark ? null : Border.all(color: Colors.black.withOpacity(0.8), width: 1.0),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: child,
+    );
+  }
 
-  // ボディメトリクス（身長、体重、年齢）セクション
   Widget _buildBodyMetricsSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor = isDark ? kCardDark : Colors.white;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+    return _buildSectionContainer(
+      context,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -142,7 +186,7 @@ class ProfileScreen extends ConsumerWidget {
               SizedBox(width: 16),
               Expanded(child: _buildMetricCard(context, ref, "体重", userProfile.weight, "kg")),
               SizedBox(width: 16),
-              Expanded(child: _buildMetricCard(context, ref, "年齢", userProfile.age, "歳", editable: false)),
+              Expanded(child: _buildMetricCard(context, ref, "年齢", userProfile.age, "歳")),
             ],
           ),
         ],
@@ -195,13 +239,47 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // 設定セクション
+  Widget _buildGoalSection(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(userProfileProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color tileColor = isDark ? kCardDark : Colors.white;
+
+    return _buildSectionContainer(
+      context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle(context, "フィットネス目標"),
+          SizedBox(height: 12),
+          _buildSettingCard(
+            context,
+            tileColor,
+            [
+              _buildSettingItem(
+                context,
+                icon: Icons.flag_outlined,
+                title: "現在の目標",
+                subtitle: userProfile.goal,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => OnboardingGoalScreen(isChangingGoal: true)),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSettingsSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color tileColor = isDark ? kCardDark : Colors.white;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+    return _buildSectionContainer(
+      context,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,7 +325,9 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.info_outline, 
                 title: "バージョン情報",
                 subtitle: "1.0.0 (プロトタイプ)",
-                onTap: () {}
+                onTap: () {
+                   Navigator.push(context, MaterialPageRoute(builder: (context) => VersionInfoScreen()));
+                }
               ),
             ]
           ),
@@ -256,7 +336,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // ログアウトセクション
   Widget _buildLogoutSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color tileColor = isDark ? kCardDark : Colors.white;
@@ -271,7 +350,7 @@ class ProfileScreen extends ConsumerWidget {
             context, 
             icon: Icons.logout, 
             title: "ログアウト",
-            color: kHighlight, // ログアウトは強調色で
+            color: kHighlight, 
             onTap: () {
               Navigator.pushAndRemoveUntil(
                 context,
@@ -285,8 +364,8 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // 共通部品: セクションタイトル
   Widget _buildSectionTitle(BuildContext context, String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: Text(
@@ -294,22 +373,22 @@ class ProfileScreen extends ConsumerWidget {
         style: TextStyle(
           fontSize: 13, 
           fontWeight: FontWeight.bold, 
-          color: kTextDarkSecondary,
+          color: isDark ? kTextDarkSecondary : kTextLightSecondary,
           letterSpacing: 0.5,
         ),
       ),
     );
   }
 
-  // 共通部品: 設定カード（グループ化された設定項目）
   Widget _buildSettingCard(BuildContext context, Color cardColor, List<Widget> children) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.1 : 0.05),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -326,7 +405,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // 共通部品: 設定項目（ListTile）
   Widget _buildSettingItem(BuildContext context, {required IconData icon, required String title, String? subtitle, Color? color, required VoidCallback onTap}) {
     return ListTile(
       leading: Icon(icon, color: color ?? kTextDarkSecondary),
@@ -334,11 +412,10 @@ class ProfileScreen extends ConsumerWidget {
       subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: kTextDarkSecondary, fontSize: 13)) : null,
       trailing: (color == null) ? Icon(Icons.chevron_right, color: kTextDarkSecondary) : null,
       onTap: onTap,
-      minLeadingWidth: 20, // leadingアイコンの最小幅
+      minLeadingWidth: 20, 
     );
   }
 
-  // 共通部品: 体重/身長編集モーダル
   void _showEditModal(BuildContext context, WidgetRef ref, String title, String initialValue, String unit) {
     final controller = TextEditingController(text: initialValue);
 
@@ -384,6 +461,8 @@ class ProfileScreen extends ConsumerWidget {
                       ref.read(userProfileProvider.notifier).updateHeight(controller.text);
                     } else if (title == "体重") {
                       ref.read(userProfileProvider.notifier).updateWeight(controller.text);
+                    } else if (title == "年齢") {
+                      ref.read(userProfileProvider.notifier).updateAge(controller.text);
                     }
                     Navigator.pop(context);
                   },

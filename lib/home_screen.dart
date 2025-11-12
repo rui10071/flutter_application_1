@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'theme.dart';
 import 'selection_screen.dart';
 import 'mydata_screen.dart';
@@ -13,18 +14,34 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: EdgeInsets.only(bottom: 100),
-          children: [
-            _buildHeader(context, ref),
-            _buildSummaryCards(),
-            _buildRecommendedHeader(context, ref),
-            _buildRecommendedList(context),
-            _buildActivityGraph(context),
-          ],
-        ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [kPrimaryColor.withOpacity(0.6), Theme.of(context).scaffoldBackgroundColor],
+                stops: [0.0, 0.3],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: ListView(
+              padding: EdgeInsets.only(bottom: 100),
+              children: [
+                _buildHeader(context, ref),
+                _buildAiFeedbackCard(context, ref),
+                _buildSummaryCards(context),
+                _buildRecommendedHeader(context, ref),
+                _buildRecommendedList(context),
+                _buildActivityGraph(context),
+                _buildRecentActivity(context),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -35,68 +52,147 @@ class HomeScreen extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: AssetImage("assets/images/burpee.jpg"),
-              ),
-              SizedBox(width: 12),
               Text(
                 "こんにちは、健太さん！",
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "今日もフォームを改善しましょう",
+                style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
               ),
             ],
           ),
-          IconButton(
-            icon: Icon(Icons.account_circle_outlined, color: Theme.of(context).textTheme.bodyLarge?.color),
-            iconSize: 28,
-            onPressed: () {
+          GestureDetector(
+            onTap: () {
               ref.read(mainNavIndexProvider.notifier).state = 3;
             },
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildAiFeedbackCard(BuildContext context, WidgetRef ref) {
+    final userGoal = ref.watch(userProfileProvider).goal;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    String feedbackText;
+    String targetMenuId;
+
+    switch (userGoal) {
+      case "筋力をアップしたい":
+        feedbackText = "AIが「プッシュアップ」の復習を推奨しています。前回より負荷を上げてみましょう。";
+        targetMenuId = "pushup";
+        break;
+      case "ダイエット・減量したい":
+        feedbackText = "目標達成のため「全身HIIT」がおすすめです。心拍数を上げて脂肪を燃焼させましょう。";
+        targetMenuId = "hiit";
+        break;
+      case "フォームを改善したい":
+      default:
+        feedbackText = "昨日の「スクワット」のフォーム（膝）が乱れていました。復習しましょう。";
+        targetMenuId = "squat";
+        break;
+    }
+    
+    final targetMenu = DUMMY_TRAININGS.firstWhere((m) => m.id == targetMenuId, orElse: () => DUMMY_TRAININGS.first);
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: isDark ? kCardDark : kCardLight,
+        elevation: 4,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: targetMenu)));
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    Icon(Icons.smart_toy_outlined, color: kPrimaryColor, size: 20),
+                    SizedBox(width: 8),
+                    Text("AIからのフィードバック", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        feedbackText,
+                        style: TextStyle(fontSize: 14, height: 1.5, color: Theme.of(context).textTheme.bodyLarge?.color),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCards(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          Expanded(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("本日の活動時間", style: TextStyle(color: kTextDarkSecondary, fontSize: 14)),
-                    SizedBox(height: 4),
-                    Text("5h 30m", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          _buildInfoCard("本日の活動時間", "5h 30m", Icons.timer_outlined, kPrimaryColor.withOpacity(0.1), kPrimaryColor),
           SizedBox(width: 16),
-          Expanded(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("本日の消費カロリー", style: TextStyle(color: kTextDarkSecondary, fontSize: 14)),
-                    SizedBox(height: 4),
-                    Text("1,200 kcal", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          _buildInfoCard("消費カロリー", "1,200 kcal", Icons.local_fire_department_outlined, Colors.orange.withOpacity(0.1), Colors.orange),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String title, String value, IconData icon, Color backgroundColor, Color iconColor) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(color: kTextDarkSecondary, fontSize: 12)),
+                  SizedBox(height: 4),
+                  Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -108,7 +204,7 @@ class HomeScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text("あなたへのおすすめ", style: Theme.of(context).textTheme.titleLarge),
+          Text("あなたへのおすすめ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           TextButton(
             child: Text("すべて見る", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
             onPressed: () {
@@ -121,10 +217,6 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildRecommendedList(BuildContext context) {
-    final List<Map<String, dynamic>> feedback = [
-      {"title": "AIからのフィードバック", "desc": "昨日のスクワットのフォーム（膝）が乱れていました。復習しましょう。", "isAIFeedback": true, "imagePath": "assets/images/deadlift.jpg", "isAsset": true},
-    ];
-    
     final recommendedItems = DUMMY_TRAININGS.take(3).toList();
 
     return Container(
@@ -132,73 +224,30 @@ class HomeScreen extends ConsumerWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 16),
-        itemCount: feedback.length + recommendedItems.length,
+        itemCount: recommendedItems.length,
         itemBuilder: (context, index) {
+          final item = recommendedItems[index];
+          final Widget imageWidget;
           
-          if (index == 0) {
-            final item = feedback[0];
-            final bool isAIFeedback = item["isAIFeedback"] as bool? ?? false;
-
-            return GestureDetector(
-              onTap: () {
-                final squatMenu = DUMMY_TRAININGS.firstWhere((m) => m.id == "squat", orElse: () => DUMMY_TRAININGS.first);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: squatMenu)));
-              },
-              child: Container(
-                width: 256,
-                margin: EdgeInsets.only(right: 16),
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  color: isAIFeedback ? kPrimaryColor.withOpacity(0.15) : Theme.of(context).cardTheme.color,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.asset(
-                        item["imagePath"]! as String,
-                        height: 100,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item["title"]! as String, style: TextStyle(fontWeight: FontWeight.bold)),
-                            SizedBox(height: 4),
-                            Text(
-                              item["desc"]! as String, 
-                              style: TextStyle(
-                                color: isAIFeedback ? kTextDark : kTextDarkSecondary, 
-                                fontSize: 12
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-          
-          final item = recommendedItems[index - 1];
-          final Widget imageWidget = item.isAsset
-            ? Image.asset(
-                item.imagePath,
-                height: 100,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              )
-            : Image.network(
+          if (item.isAsset) {
+            imageWidget = Image.asset(
                 item.imagePath,
                 height: 100,
                 width: double.infinity,
                 fit: BoxFit.cover,
               );
+          } else {
+            imageWidget = CachedNetworkImage(
+              imageUrl: item.imagePath,
+              height: 100,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Center(
+                child: CircularProgressIndicator(color: kPrimaryColor, strokeWidth: 2.0),
+              ),
+              errorWidget: (context, url, error) => Icon(Icons.error, color: kHighlight),
+            );
+          }
 
           return GestureDetector(
             onTap: () {
@@ -251,8 +300,8 @@ class HomeScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("週間活動量", style: Theme.of(context).textTheme.titleLarge),
-          SizedBox(height: 8),
+          Text("週間活動量", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -296,13 +345,13 @@ class HomeScreen extends ConsumerWidget {
                     borderData: FlBorderData(show: false),
                     gridData: FlGridData(show: false),
                     barGroups: [
-                      _makeBar(0, 60),
-                      _makeBar(1, 20),
-                      _makeBar(2, 80),
-                      _makeBar(3, 10),
-                      _makeBar(4, 90, color: Color(0xFFFF9800)),
-                      _makeBar(5, 0),
-                      _makeBar(6, 40),
+                      _makeBar(context, 0, 60),
+                      _makeBar(context, 1, 20),
+                      _makeBar(context, 2, 80),
+                      _makeBar(context, 3, 10),
+                      _makeBar(context, 4, 90, color: kPrimaryColor),
+                      _makeBar(context, 5, 0),
+                      _makeBar(context, 6, 40),
                     ],
                   ),
                 ),
@@ -314,13 +363,64 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  BarChartGroupData _makeBar(int x, double y, {Color color = const Color(0xFF03A9F4)}) {
+  Widget _buildRecentActivity(BuildContext context) {
+    final recentActivities = [
+      {"title": "基本のスクワット", "desc": "15回 x 3セット", "icon": Icons.fitness_center},
+      {"title": "プッシュアップ", "desc": "10回 x 3セット", "icon": Icons.fitness_center},
+    ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("最近のアクティビティ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+          SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: recentActivities.length,
+            itemBuilder: (context, index) {
+              final item = recentActivities[index];
+              return Card(
+                margin: EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? kCardDark : kPrimaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(item["icon"] as IconData, color: kPrimaryColor),
+                  ),
+
+                  title: Text(item["title"] as String, style: TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(item["desc"] as String, style: TextStyle(color: kTextDarkSecondary)),
+                  trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  onTap: () {
+                    final menu = DUMMY_TRAININGS.firstWhere((m) => m.title == item["title"], orElse: () => DUMMY_TRAININGS.first);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: menu)));
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  BarChartGroupData _makeBar(BuildContext context, int x, double y, {Color color = const Color(0xFF03A9F4)}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final barColor = color == const Color(0xFF03A9F4) ? (isDark ? Colors.blue[700] : Colors.blue[300]) : color;
+
     return BarChartGroupData(
       x: x,
       barRods: [
         BarChartRodData(
           toY: y,
-          color: color,
+          color: barColor,
           width: 16,
           borderRadius: BorderRadius.circular(4),
         ),

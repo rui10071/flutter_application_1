@@ -9,7 +9,6 @@ class TrainingMenu {
   final String difficulty;
   final String imagePath; 
   final bool isAsset; 
-  final String videoUrl;
   final String overview;
   final List<String> howTo;
   final List<String> tips;
@@ -27,7 +26,6 @@ class TrainingMenu {
     required this.difficulty,
     required this.imagePath,
     this.isAsset = false, 
-    required this.videoUrl,
     required this.overview,
     required this.howTo,
     required this.tips,
@@ -49,7 +47,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "中級",
     imagePath: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2940&auto=format&fit=crop",
     isAsset: false,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-doing-push-ups-at-the-gym-2287-large.mp4",
     overview: "プッシュアップは、主に大胸筋、上腕三頭筋、三角筋を鍛える自重トレーニングです。体幹の安定性も向上させます。",
     howTo: [
       "四つん這いになり、肩の真下に手を、腰の真下に膝を置きます。",
@@ -75,7 +72,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2787&auto=format&fit=crop",
     isAsset: false,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-in-the-living-room-12211-large.mp4",
     overview: "朝のヨガは、心と体をリフレッシュさせ、一日を活動的にスタートさせるのに最適です。深い呼吸と共に、全身を優しく伸ばします。",
     howTo: [
       "マットの上に立ち、深く息を吸い込みます。",
@@ -101,7 +97,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=2940&auto=format&fit=crop",
     isAsset: false,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-squatting-with-weights-42174-large.mp4",
     overview: "スクワットは「キング・オブ・トレーニング」とも呼ばれ、下半身全体と体幹を効率よく鍛えることができます。",
     howTo: [
       "足を肩幅に開きます。",
@@ -127,7 +122,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=2938&auto=format&fit=crop",
     isAsset: false,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-exercising-on-an-exercise-ball-42175-large.mp4",
     overview: "プランクは、腹筋群、背筋、体幹の深層筋を鍛えるのに非常に効果的なトレーニングです。",
     howTo: [
       "うつ伏せになり、肘を肩の真下に置きます。",
@@ -153,7 +147,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "中級",
     imagePath: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=2787&auto=format&fit=crop",
     isAsset: false,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-leg-raises-on-a-mat-42180-large.mp4",
     overview: "レッグレイズは、特に腹直筋の下部をターゲットにした体幹トレーニングです。",
     howTo: [
       "仰向けになり、手は体の横かお尻の下に置きます。",
@@ -181,7 +174,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "中級",
     imagePath: "assets/images/hiit.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-exercising-in-a-dark-gym-42171-large.mp4",
     overview: "高強度インターバルトレーニング（HIIT）で、短時間で効率よく脂肪を燃焼させ、心肺機能を高めます。",
     howTo: [
       "バーピーを30秒間行います。",
@@ -208,7 +200,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "assets/images/lunge.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-lunges-in-a-gym-42172-large.mp4",
     overview: "ランジは、大腿四頭筋、ハムストリングス、大臀筋をターゲットにした下半身トレーニングです。",
     howTo: [
       "まっすぐ立ち、片足を大きく前に踏み出します。",
@@ -234,7 +225,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "assets/images/crunch.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-doing-crunches-on-a-mat-42170-large.mp4",
     overview: "クランチは、腹直筋（特に上部）を鍛えるための基本的な体幹トレーニングです。",
     howTo: [
       "仰向けになり、膝を90度に曲げます。",
@@ -260,7 +250,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "上級",
     imagePath: "assets/images/pullup.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-doing-pull-ups-42169-large.mp4",
     overview: "懸垂は、広背筋、僧帽筋、上腕二頭筋など、背中と腕の筋肉を鍛える非常に効果的な自重トレーニングです。",
     howTo: [
       "バーを肩幅よりやや広く握ります。",
@@ -286,7 +275,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "assets/images/downdog.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-in-the-living-room-12211-large.mp4",
     overview: "ダウンドッグ（下向きの犬のポーズ）は、全身を伸ばし、特に背中、ハムストリングス、ふくらはぎの柔軟性を高めます。",
     howTo: [
       "四つん這いになります。",
@@ -312,7 +300,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "上級",
     imagePath: "assets/images/burpee.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-exercising-in-a-dark-gym-42171-large.mp4",
     overview: "バーピーは、全身の筋力、持久力、心肺機能を同時に鍛えることができる高強度のトレーニングです。",
     howTo: [
       "立った状態からしゃがみ、両手を床につけます。",
@@ -339,7 +326,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "中級",
     imagePath: "assets/images/benchpress.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-lifting-weights-in-a-gym-42173-large.mp4",
     overview: "ベンチプレスは、大胸筋、上腕三頭筋、三角筋を鍛える、上半身トレーニングの代表的な種目です。（※要器具）",
     howTo: [
       "ベンチに仰向けになり、肩甲骨を寄せます。",
@@ -365,7 +351,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "上級",
     imagePath: "assets/images/deadlift.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-man-lifting-a-heavy-barbell-42168-large.mp4",
     overview: "デッドリフトは、背中、お尻、脚など、体の背面にあるほぼすべての筋肉を鍛えることができる種目です。（※要器具）",
     howTo: [
       "バーの前に立ち、足は腰幅程度に開きます。",
@@ -392,7 +377,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "中級",
     imagePath: "assets/images/sideplank.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-exercising-on-an-exercise-ball-42175-large.mp4",
     overview: "サイドプランクは、腹斜筋（脇腹）と体幹の安定性を鍛えるのに効果的なトレーニングです。",
     howTo: [
       "横向きになり、片方の肘を肩の真下に置きます。",
@@ -418,7 +402,6 @@ final List<TrainingMenu> DUMMY_TRAININGS = [
     difficulty: "初級",
     imagePath: "assets/images/shoulderstretch.jpg",
     isAsset: true,
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-in-the-living-room-12211-large.mp4",
     overview: "デスクワークやトレーニング後の肩の緊張をほぐし、柔軟性を高めるストレッチです。",
     howTo: [
       "立った状態、または座った状態で、片腕を胸の前にまっすぐ伸ばします。",

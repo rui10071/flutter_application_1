@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // <--- 追加
 import 'theme.dart';
 import 'details_screen.dart';
 import 'training_model.dart';
 import 'main_screen.dart';
 
+// ... (Providerの定義は変更なし) ...
 final selectedChipProvider = StateProvider<String>((ref) => "すべて");
 final searchQueryProvider = StateProvider<String>((ref) => "");
 
@@ -28,6 +30,7 @@ final filteredTrainingProvider = Provider<List<TrainingMenu>>((ref) {
   return list;
 });
 
+
 class SelectionScreen extends ConsumerStatefulWidget {
   @override
   _SelectionScreenState createState() => _SelectionScreenState();
@@ -48,58 +51,68 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     final _filteredList = ref.watch(filteredTrainingProvider);
 
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _buildAppBar(context, ref),
-            _buildSearchBar(context),
-            _buildChips(context),
-            Expanded(
-              child: _buildGrid(context, _filteredList),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      extendBodyBehindAppBar: true,
+      appBar: _buildAppBar(context, ref),
+      body: Stack(
         children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyLarge?.color),
-            onPressed: () {
-              ref.read(mainNavIndexProvider.notifier).state = 0;
-            },
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [kPrimaryColor.withOpacity(0.5), kBackgroundDark],
+                stops: [0.0, 0.3],
+              ),
+            ),
           ),
-          Text("トレーニング", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          SizedBox(width: 48),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _buildSearchBar(context),
+                _buildChips(context),
+                Expanded(
+                  child: _buildGrid(context, _filteredList),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
+  AppBar _buildAppBar(BuildContext context, WidgetRef ref) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () {
+          ref.read(mainNavIndexProvider.notifier).state = 0;
+        },
+      ),
+      title: Text("トレーニング", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+    );
+  }
+
   Widget _buildSearchBar(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: TextField(
         controller: _searchController,
+        style: TextStyle(color: Colors.white),
         onChanged: (value) {
           ref.read(searchQueryProvider.notifier).state = value;
         },
         decoration: InputDecoration(
           hintText: "トレーニングを検索",
           hintStyle: TextStyle(color: kTextDarkSecondary),
-          prefixIcon: Icon(Icons.search, color: kTextDarkSecondary),
+          prefixIcon: Icon(Icons.search, color: kTextDarkSecondary, size: 20),
           suffixIcon: ref.watch(searchQueryProvider).isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear, color: kTextDarkSecondary),
+                  icon: Icon(Icons.clear, color: kTextDarkSecondary, size: 20),
                   onPressed: () {
                     _searchController.clear();
                     ref.read(searchQueryProvider.notifier).state = "";
@@ -107,12 +120,19 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                 )
               : null,
           filled: true,
-          fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+          fillColor: Colors.white.withOpacity(0.05),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(28),
-            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: kPrimaryColor),
+          ),
         ),
       ),
     );
@@ -132,23 +152,29 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
           final isSelected = _selectedChip == chipName;
           return Container(
             margin: EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(chipName),
-              selected: isSelected,
-              onSelected: (selected) {
-                ref.read(selectedChipProvider.notifier).state = chipName;
+            child: GestureDetector(
+              onTap: () {
+                 ref.read(selectedChipProvider.notifier).state = chipName;
               },
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: FontWeight.w500,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: isSelected ? kPrimaryColor : Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? kPrimaryColor : Colors.white.withOpacity(0.1),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    chipName,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ),
-              backgroundColor: (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200]),
-              selectedColor: kPrimaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: Colors.transparent),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 16),
             ),
           );
         },
@@ -177,34 +203,54 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
       ),
       itemBuilder: (context, index) {
         final item = _filteredList[index];
-        final Widget imageWidget = item.isAsset
-          ? Image.asset(
-              item.imagePath,
-              fit: BoxFit.cover,
-            )
-          : Image.network(
+        final Widget imageWidget;
+        
+        if (item.isAsset) {
+          imageWidget = Image.asset(
               item.imagePath,
               fit: BoxFit.cover,
             );
+        } else {
+          imageWidget = CachedNetworkImage(
+            imageUrl: item.imagePath,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Center(
+              child: CircularProgressIndicator(color: kPrimaryColor, strokeWidth: 2.0),
+            ),
+            errorWidget: (context, url, error) => Icon(Icons.error, color: kHighlight),
+          );
+        }
             
         return GestureDetector(
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)));
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 1.0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: imageWidget,
+          child: Card(
+            clipBehavior: Clip.antiAlias,
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: imageWidget,
+                  ),
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(item.title, style: TextStyle(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis,),
-              Text(item.description, style: TextStyle(color: kTextDarkSecondary, fontSize: 14)),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.title, style: TextStyle(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis,),
+                      SizedBox(height: 2),
+                      Text(item.description, style: TextStyle(color: kTextDarkSecondary, fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

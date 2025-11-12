@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; 
 
 const Color kPrimaryColor = Color(0xFF38e07b);
 const Color kBackgroundLight = Color(0xFFf6f8f7);
@@ -8,9 +9,11 @@ const Color kCardLight = Color(0xFFffffff);
 const Color kCardDark = Color(0xFF1a2c22);
 const Color kTextLight = Color(0xFF1f2937);
 const Color kTextDark = Color(0xFFe5e7eb);
-const Color kTextLightSecondary = Color(0xFF6b7280);
+const Color kTextLightSecondary = Color(0xFF6b7280); // 濃いグレーに変更
 const Color kTextDarkSecondary = Color(0xFF9ca3af);
 const Color kHighlight = Color(0xFFef4444);
+
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 final TextTheme kTextTheme = TextTheme(
   displayLarge: GoogleFonts.lexend(fontWeight: FontWeight.w700),

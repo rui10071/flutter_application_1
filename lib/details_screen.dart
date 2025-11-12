@@ -25,13 +25,17 @@ class _DetailsScreenState extends State<DetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(
-        widget.menu.videoUrl))
+    
+    String videoPath = "assets/images/${widget.menu.id}.mp4";
+    _controller = VideoPlayerController.asset(videoPath)
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
         _controller.setLooping(true);
         _controller.setVolume(0.0);
+      }).catchError((error) {
+        print("動画の読み込みに失敗しました: $videoPath");
+        print(error);
       });
     
     if (widget.menu.category == "ヨガ" || widget.menu.category == "コア") {

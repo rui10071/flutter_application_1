@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme.dart';
+import 'details_screen.dart'; 
+import 'training_model.dart'; 
 
 final selectedPeriodProvider = StateProvider<String>((ref) => '週');
 
@@ -19,14 +21,50 @@ final chartDataProvider = Provider((ref) {
   final period = ref.watch(selectedPeriodProvider);
   switch (period) {
     case '日':
-      return (title: "フォーム安定度 (本日)", avg: "平均 78 点", spots: _dailySpots, labels: _dailyLabels, interval: 6.0, showDots: true);
+      return (
+        title: "フォーム安定度 (本日)", 
+        avg: "平均 78 点", 
+        spots: _dailySpots, 
+        labels: _dailyLabels, 
+        interval: 6.0, 
+        showDots: true,
+        minX: 0.0,
+        maxX: 23.0
+      );
     case '月':
-      return (title: "フォーム安定度 (今月)", avg: "平均 82 点", spots: _monthlySpots, labels: _monthlyLabels, interval: 7.0, showDots: false);
+      return (
+        title: "フォーム安定度 (今月)", 
+        avg: "平均 82 点", 
+        spots: _monthlySpots, 
+        labels: _monthlyLabels, 
+        interval: 7.0, 
+        showDots: false,
+        minX: 0.0,
+        maxX: 30.0
+      );
     case '年':
-      return (title: "フォーム安定度 (今年)", avg: "平均 75 点", spots: _yearlySpots, labels: _yearlyLabels, interval: 2.0, showDots: true);
+      return (
+        title: "フォーム安定度 (今年)", 
+        avg: "平均 75 点", 
+        spots: _yearlySpots, 
+        labels: _yearlyLabels, 
+        interval: 2.0, 
+        showDots: true,
+        minX: 0.0,
+        maxX: 11.0
+      );
     case '週':
     default:
-      return (title: "フォーム安定度 (今週)", avg: "平均 85 点", spots: _weeklySpots, labels: _weeklyLabels, interval: 1.0, showDots: true);
+      return (
+        title: "フォーム安定度 (今週)", 
+        avg: "平均 85 点", 
+        spots: _weeklySpots, 
+        labels: _weeklyLabels, 
+        interval: 1.0, 
+        showDots: true,
+        minX: 0.0,
+        maxX: 6.0
+      );
   }
 });
 
@@ -37,85 +75,87 @@ class MyDataScreen extends ConsumerWidget {
     final textColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
 
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: EdgeInsets.only(bottom: 100),
-          children: [
-            _buildAppBar(context),
-            _buildPeriodSelector(context, ref),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildChartCard(context, ref, textColor),
-            ),
-            _buildHistoryHeader(context),
-            _buildHistoryList(context),
-          ],
-        ),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text("マイデータ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
       ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Stack(
         children: [
-          SizedBox(width: 48),
-          Text("マイデータ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          SizedBox(width: 48),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [kPrimaryColor.withOpacity(0.5), kBackgroundDark],
+                stops: [0.0, 0.3],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: ListView(
+              padding: EdgeInsets.only(bottom: 100),
+              children: [
+                SizedBox(height: 56), 
+                _buildPeriodSelector(context, ref),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _buildChartCard(context, ref, textColor),
+                ),
+                _buildHistoryHeader(context),
+                _buildHistoryList(context),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildPeriodSelector(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedPeriod = ref.watch(selectedPeriodProvider);
     final periods = ["日", "週", "月", "年"];
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[800] : Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: periods.map((period) {
-            return _buildPeriodButton(context, ref, period, selectedPeriod == period);
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPeriodButton(BuildContext context, WidgetRef ref, String text, bool isSelected) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          ref.read(selectedPeriodProvider.notifier).state = text;
+    return Container(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        itemCount: periods.length,
+        itemBuilder: (context, index) {
+          final period = periods[index];
+          final isSelected = selectedPeriod == period;
+          return Container(
+            margin: EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                ref.read(selectedPeriodProvider.notifier).state = period;
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: isSelected ? kPrimaryColor : Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? kPrimaryColor : Colors.white.withOpacity(0.1),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    period,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
         },
-        child: Container(
-          decoration: isSelected
-              ? BoxDecoration(
-                  color: kPrimaryColor,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: Offset(0, 2))],
-                )
-              : null,
-          child: Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
-              )
-            )
-          ),
-        ),
       ),
     );
   }
@@ -124,6 +164,8 @@ class MyDataScreen extends ConsumerWidget {
     final data = ref.watch(chartDataProvider);
 
     final lineChartData = LineChartData(
+      minX: data.minX,
+      maxX: data.maxX,
       minY: 0,
       maxY: 100,
       gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
@@ -149,12 +191,15 @@ class MyDataScreen extends ConsumerWidget {
     );
 
     return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(data.title, style: Theme.of(context).textTheme.titleMedium),
+            Text(data.title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             Text(data.avg, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 24),
@@ -217,8 +262,8 @@ class MyDataScreen extends ConsumerWidget {
 
   Widget _buildHistoryHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Text("トレーニング履歴", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Text("トレーニング履歴", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
     );
   }
 
@@ -230,6 +275,7 @@ class MyDataScreen extends ConsumerWidget {
       {"title": "プッシュアップ", "desc": "自重, 20回 x 3セット"},
       {"title": "ランジ", "desc": "自重, 15回 x 3セット"},
     ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -237,25 +283,28 @@ class MyDataScreen extends ConsumerWidget {
       padding: EdgeInsets.symmetric(horizontal: 16),
       itemCount: history.length,
       itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-             border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1))
-          ),
+        final item = history[index];
+        return Card(
+          margin: EdgeInsets.only(bottom: 8),
+          clipBehavior: Clip.antiAlias,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
-            contentPadding: EdgeInsets.zero,
             leading: Container(
-              width: 48,
-              height: 48,
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: kPrimaryColor.withOpacity(0.2),
+                color: isDark ? kCardDark : kPrimaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.fitness_center, color: Theme.of(context).textTheme.bodyLarge?.color),
+              child: Icon(Icons.fitness_center, color: kPrimaryColor),
             ),
-            title: Text(history[index]["title"]!, style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text(history[index]["desc"]!, style: TextStyle(color: kTextDarkSecondary)),
+            title: Text(item["title"]!, style: TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text(item["desc"]!, style: TextStyle(color: kTextDarkSecondary)),
             trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
-            onTap: () {},
+            onTap: () {
+              final menu = DUMMY_TRAININGS.firstWhere((m) => m.title == item["title"], orElse: () => DUMMY_TRAININGS.first);
+              Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: menu)));
+            },
           ),
         );
       },
