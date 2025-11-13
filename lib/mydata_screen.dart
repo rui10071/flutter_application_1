@@ -4,9 +4,14 @@ import 'package:fl_chart/fl_chart.dart';
 import 'theme.dart';
 import 'details_screen.dart'; 
 import 'training_model.dart'; 
+import 'training_history.dart'; 
+import 'result_screen.dart'; 
+import 'memo_list_screen.dart'; 
 
 final selectedPeriodProvider = StateProvider<String>((ref) => '週');
+final historyFilterProvider = StateProvider<String>((ref) => 'すべて');
 
+// ... (データ定義やchartDataProviderは変更なし) ...
 final _dailySpots = [FlSpot(8, 75), FlSpot(9, 80), FlSpot(18, 70), FlSpot(19, 85)];
 final _weeklySpots = [FlSpot(0, 75), FlSpot(1, 80), FlSpot(2, 70), FlSpot(3, 85), FlSpot(4, 90), FlSpot(5, 88), FlSpot(6, 92)];
 final _monthlySpots = [FlSpot(0, 80), FlSpot(3, 85), FlSpot(7, 75), FlSpot(10, 80), FlSpot(15, 82), FlSpot(20, 88), FlSpot(25, 90), FlSpot(29, 85)];
@@ -68,6 +73,7 @@ final chartDataProvider = Provider((ref) {
   }
 });
 
+
 class MyDataScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -105,8 +111,9 @@ class MyDataScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16.0),
                   child: _buildChartCard(context, ref, textColor),
                 ),
-                _buildHistoryHeader(context),
-                _buildHistoryList(context),
+                _buildHistoryHeader(context, ref),
+                _buildHistoryFilterChips(context, ref),
+                _buildHistoryList(context, ref),
               ],
             ),
           ),
@@ -260,27 +267,103 @@ class MyDataScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHistoryHeader(BuildContext context) {
+  Widget _buildHistoryHeader(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Text("トレーニング履歴", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), // 下部のパディングを少し減らす
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("トレーニング履歴", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+          TextButton(
+            child: Row(
+              children: [
+                Text("メモ一覧", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                Icon(Icons.notes, color: kPrimaryColor, size: 16),
+              ],
+            ),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => MemoListScreen()));
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildHistoryList(BuildContext context) {
-    final List<Map<String, String>> history = [
-      {"title": "スクワット", "desc": "50kg, 10回 x 3セット"},
-      {"title": "ベンチプレス", "desc": "60kg, 8回 x 3セット"},
-      {"title": "デッドリフト", "desc": "80kg, 5回 x 3セット"},
-      {"title": "プッシュアップ", "desc": "自重, 20回 x 3セット"},
-      {"title": "ランジ", "desc": "自重, 15回 x 3セット"},
-    ];
+  Widget _buildHistoryFilterChips(BuildContext context, WidgetRef ref) {
+    final allHistory = ref.watch(trainingHistoryProvider);
+    final types = {"すべて", ...allHistory.map((item) => item.menu.title)}.toList();
+    final selectedType = ref.watch(historyFilterProvider);
+
+    return Container(
+      height: 40,
+      // ここで上下に余白を追加して、詰まり感を解消
+      margin: const EdgeInsets.symmetric(vertical: 12.0), 
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        itemCount: types.length,
+        itemBuilder: (context, index) {
+          final type = types[index];
+          final isSelected = selectedType == type;
+          return Container(
+            margin: EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                ref.read(historyFilterProvider.notifier).state = type;
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? Colors.white.withOpacity(0.4) : Colors.white.withOpacity(0.1),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    type,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHistoryList(BuildContext context, WidgetRef ref) {
+    final allHistory = ref.watch(trainingHistoryProvider);
+    final selectedType = ref.watch(historyFilterProvider);
+
+    final history = selectedType == 'すべて' 
+        ? allHistory 
+        : allHistory.where((item) => item.menu.title == selectedType).toList();
+        
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (history.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
+        child: Center(
+          child: Text(
+            selectedType == 'すべて' ? "トレーニング履歴はありません" : "[$selectedType] の履歴はありません",
+            style: TextStyle(color: kTextDarkSecondary),
+          ),
+        ),
+      );
+    }
 
     return ListView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16), // 上部のパディングはチップのマージンで確保したため削除
       itemCount: history.length,
       itemBuilder: (context, index) {
         final item = history[index];
@@ -298,12 +381,16 @@ class MyDataScreen extends ConsumerWidget {
               ),
               child: Icon(Icons.fitness_center, color: kPrimaryColor),
             ),
-            title: Text(item["title"]!, style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text(item["desc"]!, style: TextStyle(color: kTextDarkSecondary)),
+            title: Text(item.menu.title, style: TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text("${item.reps} | フォーム安定度: ${item.score}点", style: TextStyle(color: kTextDarkSecondary)),
             trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
             onTap: () {
-              final menu = DUMMY_TRAININGS.firstWhere((m) => m.title == item["title"], orElse: () => DUMMY_TRAININGS.first);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: menu)));
+              Navigator.push(context, MaterialPageRoute(
+                builder: (context) => ResultScreen(
+                  menu: item.menu,
+                  historyItem: item, 
+                )
+              ));
             },
           ),
         );

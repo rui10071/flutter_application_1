@@ -130,26 +130,32 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: StreamBuilder<PoseFrame>(
         stream: _poseStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Stack(
               children: [
-                Container(color: Colors.black.withOpacity(0.8)),
-                Center(child: CircularProgressIndicator(color: kPrimaryColor)),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        _buildHeader(_reps),
-                        Spacer(),
-                        _buildControls(context),
-                      ],
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [kPrimaryColor.withOpacity(0.5), kBackgroundDark],
+                      stops: [0.0, 0.3],
                     ),
                   ),
                 ),
+                Center(child: CircularProgressIndicator(color: kPrimaryColor)),
               ],
             );
           }
@@ -158,15 +164,29 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
 
           return Stack(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuCdTPV-webaS0Xiajsq7bH2CIBaIO3O5XaCeXBh8vkBDdz2NqExqlvovMC-ZTQdJ5ccPGWhEs1PqFPz49xETuxATsEfGgNcJAIat-noKRhuuhwq_Xs0wHzs6UHzWVXx4CNCGTbRZgJPhtf3CoFM1QbQQVtK3h8eKXpGp_zu4JLOju8cI4fiaEHZb2zX8Hl8gMnW1nu9TFVBOz6_qxftKuInoQifs7M_hM9da_8BDi0uWS4_3Yc81a7_BJx4WKaL2cnTnTNEXaE9nik"),
-                    fit: BoxFit.cover,
+              Positioned.fill(
+                child: Image.network(
+                  "https://lh3.googleusercontent.com/aida-public/AB6AXuCdTPV-webaS0Xiajsq7bH2CIBaIO3O5XaCeXBh8vkBDdz2NqExqlvovMC-ZTQdJ5ccPGWhEs1PqFPz49xETuxATsEfGgNcJAIat-noKRhuuhwq_Xs0wHzs6UHzWVXx4CNCGTbRZgJPhtf3CoFM1QbQQVtK3h8eKXpGp_zu4JLOju8cI4fiaEHZb2zX8Hl8gMnW1nu9TFVBOz6_qxftKuInoQifs7M_hM9da_8BDi0uWS4_3Yc81a7_BJx4WKaL2cnTnTNEXaE9nik",
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                ),
+              ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.6),
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.8),
+                      ],
+                      stops: [0.0, 0.4, 1.0],
+                    ),
                   ),
                 ),
               ),
-              Container(color: Colors.black.withOpacity(0.4)),
               
               _buildSkeleton(poseFrame),
 
@@ -193,19 +213,46 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
 
   Widget _buildHeader(int reps) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: kPrimaryColor,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.camera_alt, color: Colors.white, size: 16),
+              SizedBox(width: 8),
+              Text(
+                "LIVE",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               "$reps",
-              style: TextStyle(color: Colors.white, fontSize: 60, fontWeight: FontWeight.bold, height: 1.0),
+              style: TextStyle(
+                color: Colors.white, 
+                fontSize: 72, 
+                fontWeight: FontWeight.bold, 
+                height: 1.0,
+                shadows: [Shadow(color: Colors.black.withOpacity(0.3), blurRadius: 8)]
+              ),
             ),
             Text(
               "reps",
-              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 24),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9), 
+                fontSize: 24, 
+                height: 1.0
+              ),
             ),
           ],
         )
@@ -228,17 +275,17 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
 
   Widget _buildFeedbackCard({required IconData icon, required String text, required Color color, bool isError = false}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: isError ? Border.all(color: color, width: 1) : null,
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(isError ? 1.0 : 0.3), width: 1.5),
       ),
       child: Row(
         children: [
           Icon(icon, color: color, size: 28),
           SizedBox(width: 16),
-          Expanded(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 16))),
+          Expanded(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500))),
           SizedBox(width: 8),
           Icon(Icons.volume_up, color: Colors.white.withOpacity(0.7), size: 24),
         ],
@@ -250,7 +297,7 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
     return Container(
       padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withOpacity(0.6),
         borderRadius: BorderRadius.circular(32),
       ),
       child: Row(
@@ -276,7 +323,7 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => ResultScreen()),
+                MaterialPageRoute(builder: (context) => ResultScreen(menu: widget.menu)),
               );
             },
           ),

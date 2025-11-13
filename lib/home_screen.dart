@@ -10,6 +10,7 @@ import 'details_screen.dart';
 import 'training_model.dart';
 import 'main_screen.dart';
 
+
 class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +47,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final userName = ref.watch(userProfileProvider).name;
+
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
@@ -56,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "こんにちは、健太さん！",
+                "こんにちは、$userNameさん！",
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold
@@ -83,12 +88,15 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildAiFeedbackCard(BuildContext context, WidgetRef ref) {
     final userGoal = ref.watch(userProfileProvider).goal;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+
     String feedbackText;
     String targetMenuId;
+
 
     switch (userGoal) {
       case "筋力をアップしたい":
@@ -107,6 +115,7 @@ class HomeScreen extends ConsumerWidget {
     }
     
     final targetMenu = DUMMY_TRAININGS.firstWhere((m) => m.id == targetMenuId, orElse: () => DUMMY_TRAININGS.first);
+
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -153,18 +162,20 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildSummaryCards(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          _buildInfoCard("本日の活動時間", "5h 30m", Icons.timer_outlined, kPrimaryColor.withOpacity(0.1), kPrimaryColor),
+          _buildInfoCard("本日の活動時間", "45m", Icons.timer_outlined, kPrimaryColor.withOpacity(0.1), kPrimaryColor),
           SizedBox(width: 16),
-          _buildInfoCard("消費カロリー", "1,200 kcal", Icons.local_fire_department_outlined, Colors.orange.withOpacity(0.1), Colors.orange),
+          _buildInfoCard("消費カロリー", "320 kcal", Icons.local_fire_department_outlined, Colors.orange.withOpacity(0.1), Colors.orange),
         ],
       ),
     );
   }
+
 
   Widget _buildInfoCard(String title, String value, IconData icon, Color backgroundColor, Color iconColor) {
     return Expanded(
@@ -197,15 +208,21 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildRecommendedHeader(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 24, 8, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text("あなたへのおすすめ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text("すべて見る", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
             onPressed: () {
               ref.read(mainNavIndexProvider.notifier).state = 1;
@@ -216,8 +233,10 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildRecommendedList(BuildContext context) {
     final recommendedItems = DUMMY_TRAININGS.take(3).toList();
+
 
     return Container(
       height: 190,
@@ -248,6 +267,7 @@ class HomeScreen extends ConsumerWidget {
               errorWidget: (context, url, error) => Icon(Icons.error, color: kHighlight),
             );
           }
+
 
           return GestureDetector(
             onTap: () {
@@ -291,9 +311,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildActivityGraph(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
+
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -306,12 +328,17 @@ class HomeScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                height: 128,
+                height: 150,
                 child: BarChart(
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
-                    maxY: 100,
-                    barTouchData: BarTouchData(enabled: true),
+                    maxY: 60,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (group) => isDark ? kCardDark : Colors.white,
+                      ),
+                    ),
                     titlesData: FlTitlesData(
                       show: true,
                       bottomTitles: AxisTitles(
@@ -330,12 +357,10 @@ class HomeScreen extends ConsumerWidget {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 30,
+                          reservedSize: 35,
+                          interval: 20,
                           getTitlesWidget: (double value, TitleMeta meta) {
-                            if (value == 0 || value == 50 || value == 100) {
-                              return Text("${value.toInt()}分", style: TextStyle(color: textColor, fontSize: 10));
-                            }
-                            return Text("");
+                            return Text("${value.toInt()}分", style: TextStyle(color: textColor, fontSize: 10));
                           },
                         ),
                       ),
@@ -343,14 +368,24 @@ class HomeScreen extends ConsumerWidget {
                       rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
                     borderData: FlBorderData(show: false),
-                    gridData: FlGridData(show: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 20,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: textColor.withOpacity(0.1),
+                          strokeWidth: 1,
+                        );
+                      },
+                    ),
                     barGroups: [
-                      _makeBar(context, 0, 60),
-                      _makeBar(context, 1, 20),
-                      _makeBar(context, 2, 80),
-                      _makeBar(context, 3, 10),
-                      _makeBar(context, 4, 90, color: kPrimaryColor),
-                      _makeBar(context, 5, 0),
+                      _makeBar(context, 0, 30),
+                      _makeBar(context, 1, 45),
+                      _makeBar(context, 2, 20),
+                      _makeBar(context, 3, 0),
+                      _makeBar(context, 4, 50, color: kPrimaryColor),
+                      _makeBar(context, 5, 15),
                       _makeBar(context, 6, 40),
                     ],
                   ),
@@ -363,6 +398,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildRecentActivity(BuildContext context) {
     final recentActivities = [
       {"title": "基本のスクワット", "desc": "15回 x 3セット", "icon": Icons.fitness_center},
@@ -370,12 +406,13 @@ class HomeScreen extends ConsumerWidget {
     ];
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("最近のアクティビティ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+          Text("最近のアクティビティ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: isDark ? Colors.white : kTextLight)),
           SizedBox(height: 12),
           ListView.builder(
             shrinkWrap: true,
@@ -394,7 +431,6 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     child: Icon(item["icon"] as IconData, color: kPrimaryColor),
                   ),
-
                   title: Text(item["title"] as String, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(item["desc"] as String, style: TextStyle(color: kTextDarkSecondary)),
                   trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
@@ -411,9 +447,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+
   BarChartGroupData _makeBar(BuildContext context, int x, double y, {Color color = const Color(0xFF03A9F4)}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final barColor = color == const Color(0xFF03A9F4) ? (isDark ? Colors.blue[700] : Colors.blue[300]) : color;
+
 
     return BarChartGroupData(
       x: x,
@@ -423,9 +461,15 @@ class HomeScreen extends ConsumerWidget {
           color: barColor,
           width: 16,
           borderRadius: BorderRadius.circular(4),
+          backDrawRodData: BackgroundBarChartRodData(
+            show: true,
+            toY: 60,
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+          ),
         ),
       ],
     );
   }
 }
+
 

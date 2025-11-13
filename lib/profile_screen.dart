@@ -7,7 +7,8 @@ import 'notification_settings_screen.dart';
 import 'help_support_screen.dart';
 import 'edit_profile_screen.dart';
 import 'onboarding_goal_screen.dart'; 
-import 'version_info_screen.dart'; // バージョン情報画面をインポート
+import 'version_info_screen.dart';
+
 
 class UserProfile {
   final String name;
@@ -17,6 +18,7 @@ class UserProfile {
   final String age;
   final String goal;
 
+
   UserProfile({
     this.name = "田中 健太",
     this.email = "kenta.tanaka@example.com",
@@ -25,6 +27,7 @@ class UserProfile {
     this.age = "28", 
     this.goal = "フォームを改善したい"
   });
+
 
   UserProfile copyWith({String? name, String? email, String? height, String? weight, String? age, String? goal}) {
     return UserProfile(
@@ -38,33 +41,41 @@ class UserProfile {
   }
 }
 
+
 class UserProfileNotifier extends StateNotifier<UserProfile> {
   UserProfileNotifier() : super(UserProfile());
+
 
   void updateName(String newName) {
     state = state.copyWith(name: newName);
   }
 
+
   void updateHeight(String newHeight) {
     state = state.copyWith(height: newHeight);
   }
+
 
   void updateWeight(String newWeight) {
     state = state.copyWith(weight: newWeight);
   }
 
+
   void updateAge(String newAge) {
     state = state.copyWith(age: newAge);
   }
+
 
   void updateGoal(String newGoal) {
     state = state.copyWith(goal: newGoal);
   }
 }
 
+
 final userProfileProvider = StateNotifierProvider<UserProfileNotifier, UserProfile>((ref) {
   return UserProfileNotifier();
 });
+
 
 class ProfileScreen extends ConsumerWidget {
   @override
@@ -72,12 +83,21 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+
     return Scaffold(
       extendBodyBehindAppBar: true, 
       appBar: AppBar(
         backgroundColor: Colors.transparent, 
         elevation: 0, 
         foregroundColor: isDark ? Colors.white : kTextLight, 
+        actions: [
+           IconButton(
+             icon: Icon(Icons.settings_outlined),
+             onPressed: () {
+               Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingsScreen()));
+             },
+           ),
+        ],
       ),
       body: Stack(
         children: [
@@ -102,7 +122,7 @@ class ProfileScreen extends ConsumerWidget {
                 _buildGoalSection(context, ref),
                 _buildSettingsSection(context),
                 _buildLogoutSection(context),
-                SizedBox(height: 32),
+                SizedBox(height: 100),
               ],
             ),
           ),
@@ -111,19 +131,34 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildHeaderSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
-            backgroundColor: Colors.white.withOpacity(0.8), 
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
+              backgroundColor: Colors.white.withOpacity(0.8), 
+            ),
           ),
           SizedBox(height: 16),
           Text(
@@ -146,11 +181,12 @@ class ProfileScreen extends ConsumerWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               elevation: 0,
+              side: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
             ),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
             },
-            icon: Icon(Icons.edit_outlined, size: 20),
+            icon: Icon(Icons.edit_outlined, size: 18),
             label: Text("プロフィールを編集", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
           ),
         ],
@@ -170,6 +206,7 @@ class ProfileScreen extends ConsumerWidget {
       child: child,
     );
   }
+
 
   Widget _buildBodyMetricsSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
@@ -194,9 +231,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildMetricCard(BuildContext context, WidgetRef ref, String label, String value, String unit, {bool editable = true}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color cardColor = isDark ? kCardDark : Colors.white;
+
 
     return GestureDetector(
       onTap: editable ? () => _showEditModal(context, ref, label, value, unit) : null,
@@ -219,19 +258,29 @@ class ProfileScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(label, style: TextStyle(fontSize: 14, color: kTextDarkSecondary)),
-                if (editable) Icon(Icons.edit_outlined, size: 18, color: kTextDarkSecondary),
+                Text(label, style: TextStyle(fontSize: 12, color: kTextDarkSecondary, fontWeight: FontWeight.bold)),
+                if (editable) Icon(Icons.edit_outlined, size: 16, color: kTextDarkSecondary),
               ],
             ),
             SizedBox(height: 8),
-            RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
-                children: [
-                  TextSpan(text: value),
-                  TextSpan(text: " $unit", style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: kTextDarkSecondary)),
-                ],
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold, 
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    height: 1.0,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  unit,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: kTextDarkSecondary),
+                ),
+              ],
             ),
           ],
         ),
@@ -239,10 +288,12 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildGoalSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color tileColor = isDark ? kCardDark : Colors.white;
+
 
     return _buildSectionContainer(
       context,
@@ -274,9 +325,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildSettingsSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color tileColor = isDark ? kCardDark : Colors.white;
+
 
     return _buildSectionContainer(
       context,
@@ -336,9 +389,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildLogoutSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color tileColor = isDark ? kCardDark : Colors.white;
+
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -364,12 +419,13 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildSectionTitle(BuildContext context, String title) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: Text(
-        title.toUpperCase(),
+        title,
         style: TextStyle(
           fontSize: 13, 
           fontWeight: FontWeight.bold, 
@@ -379,6 +435,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
 
   Widget _buildSettingCard(BuildContext context, Color cardColor, List<Widget> children) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -400,10 +457,11 @@ class ProfileScreen extends ConsumerWidget {
         padding: EdgeInsets.zero,
         itemCount: children.length,
         itemBuilder: (context, index) => children[index],
-        separatorBuilder: (context, index) => Divider(height: 1, indent: 56, endIndent: 16, color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        separatorBuilder: (context, index) => Divider(height: 1, indent: 56, endIndent: 16, color: Colors.white.withOpacity(0.3)),
       ),
     );
   }
+
 
   Widget _buildSettingItem(BuildContext context, {required IconData icon, required String title, String? subtitle, Color? color, required VoidCallback onTap}) {
     return ListTile(
@@ -416,8 +474,10 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+
   void _showEditModal(BuildContext context, WidgetRef ref, String title, String initialValue, String unit) {
     final controller = TextEditingController(text: initialValue);
+
 
     showModalBottomSheet(
       context: context,
@@ -476,4 +536,5 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 }
+
 
