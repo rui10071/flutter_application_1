@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
-import 'main_screen.dart';
-import 'profile_screen.dart'; // Providerをインポート
+import 'main_screen.dart'; 
+import 'profile_screen.dart';
+
 
 class OnboardingGoalScreen extends ConsumerWidget {
   final List<String> goals = [
@@ -15,7 +16,9 @@ class OnboardingGoalScreen extends ConsumerWidget {
   
   final bool isChangingGoal;
 
+
   OnboardingGoalScreen({this.isChangingGoal = false});
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +49,7 @@ class OnboardingGoalScreen extends ConsumerWidget {
                         trailing: Icon(Icons.chevron_right),
                         onTap: () {
                           ref.read(userProfileProvider.notifier).updateGoal(goals[index]);
-                          _completeOnboarding(context);
+                          _completeOnboarding(context, ref); // refを渡す
                         },
                       ),
                     ),
@@ -59,7 +62,7 @@ class OnboardingGoalScreen extends ConsumerWidget {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    _completeOnboarding(context);
+                    _completeOnboarding(context, ref); // refを渡す
                   },
                   child: Text(
                     "あとで選択する",
@@ -74,10 +77,14 @@ class OnboardingGoalScreen extends ConsumerWidget {
     );
   }
 
-  void _completeOnboarding(BuildContext context) {
+
+  void _completeOnboarding(BuildContext context, WidgetRef ref) {
     if (isChangingGoal) {
       Navigator.pop(context);
     } else {
+      ref.read(mainNavIndexProvider.notifier).state = 0;
+
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => MainScreen()),
@@ -86,4 +93,5 @@ class OnboardingGoalScreen extends ConsumerWidget {
     }
   }
 }
+
 

@@ -14,17 +14,22 @@ import 'main_screen.dart';
 class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       body: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [kPrimaryColor.withOpacity(0.6), Theme.of(context).scaffoldBackgroundColor],
-                stops: [0.0, 0.3],
-              ),
+              gradient: isDark
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [kPrimaryColor.withOpacity(0.6), Theme.of(context).scaffoldBackgroundColor],
+                      stops: [0.0, 0.3],
+                    )
+                  : null,
+              color: isDark ? null : kBackgroundLight,
             ),
           ),
           SafeArea(
@@ -32,13 +37,18 @@ class HomeScreen extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.only(bottom: 100),
               children: [
-                _buildHeader(context, ref),
-                _buildAiFeedbackCard(context, ref),
-                _buildSummaryCards(context),
-                _buildRecommendedHeader(context, ref),
-                _buildRecommendedList(context),
-                _buildActivityGraph(context),
-                _buildRecentActivity(context),
+                _buildHeader(context, ref, isDark),
+                
+                // 入れ替え：本日の進捗を先に表示
+                _buildDailyProgressCard(context),
+                
+                // 入れ替え：AIアドバイスをその下に
+                _buildAiFeedbackCard(context, ref, isDark),
+                
+                _buildRecommendedHeader(context, ref, isDark),
+                _buildRecommendedList(context, isDark),
+                _buildActivityGraph(context, isDark),
+                _buildRecentActivity(context, isDark),
               ],
             ),
           ),
@@ -48,12 +58,13 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, bool isDark) {
     final userName = ref.watch(userProfileProvider).name;
+    final textColor = isDark ? Colors.white : kTextLight;
 
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -61,26 +72,28 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "こんにちは、$userNameさん！",
+                "こんにちは、$userNameさん",
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
                 ),
               ),
               SizedBox(height: 4),
-              Text(
-                "今日もフォームを改善しましょう",
-                style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
-              ),
+              Text("今日もトレーニングを続けましょう", style: TextStyle(color: isDark ? Colors.white70 : kTextLightSecondary, fontSize: 14)),
             ],
           ),
           GestureDetector(
-            onTap: () {
-              ref.read(mainNavIndexProvider.notifier).state = 3;
-            },
-            child: CircleAvatar(
-              radius: 20,
-              backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
+            onTap: () => ref.read(mainNavIndexProvider.notifier).state = 3,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: isDark ? Colors.white : kPrimaryColor, width: 2),
+              ),
+              child: CircleAvatar(
+                radius: 22,
+                backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
+              ),
             ),
           ),
         ],
@@ -89,11 +102,11 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildAiFeedbackCard(BuildContext context, WidgetRef ref) {
+  Widget _buildAiFeedbackCard(BuildContext context, WidgetRef ref, bool isDark) {
     final userGoal = ref.watch(userProfileProvider).goal;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-
+    final cardColor = isDark ? kCardDark : Colors.white;
+    final textColor = isDark ? Colors.white : kTextLight;
+    
     String feedbackText;
     String targetMenuId;
 
@@ -118,44 +131,43 @@ class HomeScreen extends ConsumerWidget {
 
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Card(
         clipBehavior: Clip.antiAlias,
-        color: isDark ? kCardDark : kCardLight,
-        elevation: 4,
+        color: cardColor,
+        elevation: isDark ? 0 : 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: InkWell(
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: targetMenu)));
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Icon(Icons.smart_toy_outlined, color: kPrimaryColor, size: 20),
+                    Icon(Icons.smart_toy, color: kPrimaryColor, size: 20),
                     SizedBox(width: 8),
-                    Text("AIからのフィードバック", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text("AIアドバイス", style: TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor)),
                   ],
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
+                SizedBox(height: 12),
+                Text(
+                  feedbackText,
+                  style: TextStyle(fontSize: 15, height: 1.5, fontWeight: FontWeight.w500, color: textColor),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: Text(
-                        feedbackText,
-                        style: TextStyle(fontSize: 14, height: 1.5, color: Theme.of(context).textTheme.bodyLarge?.color),
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                    Text("確認する", style: TextStyle(color: isDark ? kTextDarkSecondary : kTextLightSecondary, fontSize: 12)),
+                    Icon(Icons.chevron_right, color: isDark ? kTextDarkSecondary : kTextLightSecondary, size: 16),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -163,63 +175,93 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildSummaryCards(BuildContext context) {
+  Widget _buildDailyProgressCard(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        children: [
-          _buildInfoCard("本日の活動時間", "45m", Icons.timer_outlined, kPrimaryColor.withOpacity(0.1), kPrimaryColor),
-          SizedBox(width: 16),
-          _buildInfoCard("消費カロリー", "320 kcal", Icons.local_fire_department_outlined, Colors.orange.withOpacity(0.1), Colors.orange),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _buildInfoCard(String title, String value, IconData icon, Color backgroundColor, Color iconColor) {
-    return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              SizedBox(width: 12),
-              Column(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: kPrimaryColor.withOpacity(0.3),
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(color: kTextDarkSecondary, fontSize: 12)),
-                  SizedBox(height: 4),
-                  Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("本日の活動", style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text("45", style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
+                      SizedBox(width: 4),
+                      Text("min", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("目標: 60 min", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: 45 / 60,
+                          backgroundColor: Colors.black26,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          minHeight: 6,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.timer_outlined, color: Colors.white, size: 32),
+            ),
+          ],
         ),
       ),
     );
   }
 
 
-  Widget _buildRecommendedHeader(BuildContext context, WidgetRef ref) {
+  Widget _buildRecommendedHeader(BuildContext context, WidgetRef ref, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 8, 8),
+      padding: const EdgeInsets.fromLTRB(20, 24, 8, 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text("あなたへのおすすめ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text("あなたへのおすすめ", style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold, 
+            fontSize: 18,
+            color: isDark ? Colors.white : kTextLight
+          )),
           TextButton(
             style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               minimumSize: Size(0, 0),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
@@ -234,75 +276,51 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildRecommendedList(BuildContext context) {
+  Widget _buildRecommendedList(BuildContext context, bool isDark) {
     final recommendedItems = DUMMY_TRAININGS.take(3).toList();
 
 
     return Container(
-      height: 190,
+      height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 16),
         itemCount: recommendedItems.length,
         itemBuilder: (context, index) {
           final item = recommendedItems[index];
-          final Widget imageWidget;
-          
-          if (item.isAsset) {
-            imageWidget = Image.asset(
-                item.imagePath,
-                height: 100,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              );
-          } else {
-            imageWidget = CachedNetworkImage(
-              imageUrl: item.imagePath,
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Center(
-                child: CircularProgressIndicator(color: kPrimaryColor, strokeWidth: 2.0),
-              ),
-              errorWidget: (context, url, error) => Icon(Icons.error, color: kHighlight),
-            );
-          }
-
-
           return GestureDetector(
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)));
             },
             child: Container(
-              width: 256,
+              width: 240,
               margin: EdgeInsets.only(right: 16),
-              child: Card(
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    imageWidget,
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item.title, style: TextStyle(fontWeight: FontWeight.bold)),
-                          SizedBox(height: 4),
-                          Text(
-                            item.description, 
-                            style: TextStyle(
-                              color: kTextDarkSecondary, 
-                              fontSize: 12
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: isDark ? kCardDark : Colors.white,
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    child: item.isAsset
+                        ? Image.asset(item.imagePath, height: 120, width: double.infinity, fit: BoxFit.cover)
+                        : CachedNetworkImage(imageUrl: item.imagePath, height: 120, width: double.infinity, fit: BoxFit.cover),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : kTextLight), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        SizedBox(height: 4),
+                        Text(item.description, style: TextStyle(color: isDark ? kTextDarkSecondary : kTextLightSecondary, fontSize: 12)),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
@@ -312,8 +330,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildActivityGraph(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildActivityGraph(BuildContext context, bool isDark) {
     final textColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
 
 
@@ -322,13 +339,20 @@ class HomeScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("週間活動量", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text("週間活動量", style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold, 
+            fontSize: 18,
+            color: isDark ? Colors.white : kTextLight
+          )),
           SizedBox(height: 12),
           Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: isDark ? 0 : 2,
+            color: isDark ? kCardDark : Colors.white,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Container(
-                height: 150,
+                height: 160,
                 child: BarChart(
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
@@ -354,39 +378,20 @@ class HomeScreen extends ConsumerWidget {
                           reservedSize: 30,
                         ),
                       ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 35,
-                          interval: 20,
-                          getTitlesWidget: (double value, TitleMeta meta) {
-                            return Text("${value.toInt()}分", style: TextStyle(color: textColor, fontSize: 10));
-                          },
-                        ),
-                      ),
+                      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
                     borderData: FlBorderData(show: false),
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: 20,
-                      getDrawingHorizontalLine: (value) {
-                        return FlLine(
-                          color: textColor.withOpacity(0.1),
-                          strokeWidth: 1,
-                        );
-                      },
-                    ),
+                    gridData: FlGridData(show: false),
                     barGroups: [
-                      _makeBar(context, 0, 30),
-                      _makeBar(context, 1, 45),
-                      _makeBar(context, 2, 20),
-                      _makeBar(context, 3, 0),
-                      _makeBar(context, 4, 50, color: kPrimaryColor),
-                      _makeBar(context, 5, 15),
-                      _makeBar(context, 6, 40),
+                      _makeBar(context, 0, 30, isDark),
+                      _makeBar(context, 1, 45, isDark),
+                      _makeBar(context, 2, 20, isDark),
+                      _makeBar(context, 3, 0, isDark),
+                      _makeBar(context, 4, 50, isDark, isHighlight: true),
+                      _makeBar(context, 5, 15, isDark),
+                      _makeBar(context, 6, 40, isDark),
                     ],
                   ),
                 ),
@@ -399,20 +404,23 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildRecentActivity(BuildContext context) {
+  Widget _buildRecentActivity(BuildContext context, bool isDark) {
     final recentActivities = [
       {"title": "基本のスクワット", "desc": "15回 x 3セット", "icon": Icons.fitness_center},
       {"title": "プッシュアップ", "desc": "10回 x 3セット", "icon": Icons.fitness_center},
     ];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("最近のアクティビティ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: isDark ? Colors.white : kTextLight)),
+          Text("最近のアクティビティ", style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold, 
+            color: isDark ? Colors.white : kTextLight, 
+            fontSize: 18
+          )),
           SizedBox(height: 12),
           ListView.builder(
             shrinkWrap: true,
@@ -421,19 +429,23 @@ class HomeScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final item = recentActivities[index];
               return Card(
-                margin: EdgeInsets.only(bottom: 8),
+                margin: EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: isDark ? 0 : 2,
+                color: isDark ? kCardDark : Colors.white,
                 child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: Container(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isDark ? kCardDark : kPrimaryColor.withOpacity(0.1),
+                      color: kPrimaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(item["icon"] as IconData, color: kPrimaryColor),
                   ),
-                  title: Text(item["title"] as String, style: TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(item["desc"] as String, style: TextStyle(color: kTextDarkSecondary)),
-                  trailing: Icon(Icons.chevron_right, color: kTextDarkSecondary),
+                  title: Text(item["title"] as String, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : kTextLight)),
+                  subtitle: Text(item["desc"] as String, style: TextStyle(color: isDark ? kTextDarkSecondary : kTextLightSecondary)),
+                  trailing: Icon(Icons.chevron_right, color: isDark ? kTextDarkSecondary : kTextLightSecondary),
                   onTap: () {
                     final menu = DUMMY_TRAININGS.firstWhere((m) => m.title == item["title"], orElse: () => DUMMY_TRAININGS.first);
                     Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: menu)));
@@ -448,9 +460,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
 
-  BarChartGroupData _makeBar(BuildContext context, int x, double y, {Color color = const Color(0xFF03A9F4)}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final barColor = color == const Color(0xFF03A9F4) ? (isDark ? Colors.blue[700] : Colors.blue[300]) : color;
+  BarChartGroupData _makeBar(BuildContext context, int x, double y, bool isDark, {bool isHighlight = false}) {
+    final barColor = isHighlight ? kPrimaryColor : (isDark ? Colors.blueGrey[700] : Colors.blueGrey[200]);
 
 
     return BarChartGroupData(
@@ -459,8 +470,8 @@ class HomeScreen extends ConsumerWidget {
         BarChartRodData(
           toY: y,
           color: barColor,
-          width: 16,
-          borderRadius: BorderRadius.circular(4),
+          width: 12,
+          borderRadius: BorderRadius.circular(6),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
             toY: 60,

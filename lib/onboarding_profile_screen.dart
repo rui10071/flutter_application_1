@@ -4,26 +4,28 @@ import 'theme.dart';
 import 'onboarding_goal_screen.dart';
 import 'profile_screen.dart'; 
 
+
 class OnboardingProfileScreen extends ConsumerStatefulWidget {
   @override
   _OnboardingProfileScreenState createState() => _OnboardingProfileScreenState();
 }
 
+
 class _OnboardingProfileScreenState extends ConsumerState<OnboardingProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
-  final _ageController = TextEditingController();
   
   bool _isButtonEnabled = false;
+
 
   @override
   void dispose() {
     _heightController.dispose();
     _weightController.dispose();
-    _ageController.dispose();
     super.dispose();
   }
+
 
   String? _validateNumeric(String? value, String fieldName) {
     if (value == null || value.isEmpty) {
@@ -35,11 +37,13 @@ class _OnboardingProfileScreenState extends ConsumerState<OnboardingProfileScree
     return null;
   }
 
+
   void _validateForm() {
     setState(() {
       _isButtonEnabled = _formKey.currentState?.validate() ?? false;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,18 +88,6 @@ class _OnboardingProfileScreenState extends ConsumerState<OnboardingProfileScree
                   onChanged: (value) => _validateForm(),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: _ageController,
-                  decoration: InputDecoration(
-                    labelText: "年齢 (歳)",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => _validateNumeric(value, "年齢"),
-                  onChanged: (value) => _validateForm(),
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                ),
                 SizedBox(height: 32),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -111,7 +103,6 @@ class _OnboardingProfileScreenState extends ConsumerState<OnboardingProfileScree
                     if (_formKey.currentState!.validate()) {
                       ref.read(userProfileProvider.notifier).updateHeight(_heightController.text);
                       ref.read(userProfileProvider.notifier).updateWeight(_weightController.text);
-                      ref.read(userProfileProvider.notifier).updateAge(_ageController.text);
                       
                       Navigator.push(
                         context,
@@ -129,4 +120,5 @@ class _OnboardingProfileScreenState extends ConsumerState<OnboardingProfileScree
     );
   }
 }
+
 

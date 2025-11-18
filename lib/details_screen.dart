@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'theme.dart';
 import 'execution_screen.dart';
 import 'training_model.dart';
+import 'camera_permission_screen.dart';
+
 
 class DetailsScreen extends StatefulWidget {
   final TrainingMenu menu;
 
+
   DetailsScreen({required this.menu});
+
 
   @override
   _DetailsScreenState createState() => _DetailsScreenState();
 }
+
 
 class _DetailsScreenState extends State<DetailsScreen> {
   late VideoPlayerController _controller;
@@ -19,8 +25,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
   int _selectedSets = 1;
   int _calculatedCalories = 50;
 
+
   List<String> _timeOptions = ['30秒', '45秒', '60秒'];
   final List<int> _setOptions = [1, 2, 3, 4, 5];
+
 
   @override
   void initState() {
@@ -35,7 +43,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         _controller.setVolume(0.0);
       }).catchError((error) {
         print("動画の読み込みに失敗しました: $videoPath");
-        print(error);
+
       });
     
     if (widget.menu.category == "ヨガ" || widget.menu.category == "コア") {
@@ -48,11 +56,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
     _recalculateCalories();
   }
 
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+
 
   void _recalculateCalories() {
     double baseCalories = 50.0;
@@ -60,6 +70,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       _calculatedCalories = (baseCalories * _selectedSets).round();
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +175,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+
   Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
@@ -181,6 +193,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+
   Widget _buildVideoPlayer() {
     return AspectRatio(
       aspectRatio: 16 / 9,
@@ -192,6 +205,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       ),
     );
   }
+
 
   Widget _buildInfoCards() {
     return Padding(
@@ -229,6 +243,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+
   Widget _buildDropdownCard(String title, String value, List<String> items, ValueChanged<String?> onChanged) {
     return Expanded(
       child: Card(
@@ -260,6 +275,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+
   Widget _buildSection(BuildContext context, {required String title, required Widget child}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -274,6 +290,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+
   Widget _buildInstructionStep(String number, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -286,6 +303,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       ),
     );
   }
+
 
   Widget _buildTip(String text) {
     return Padding(
@@ -335,6 +353,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     fit: BoxFit.cover,
                   );
 
+
               return Container(
                 width: 192,
                 margin: EdgeInsets.only(right: 16),
@@ -376,6 +395,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+
   Widget _buildStartButton(BuildContext context) {
     return Positioned(
       bottom: 0,
@@ -397,8 +417,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Lexend'),
           ),
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+          onPressed: () async {
+
+            
+            var status = await Permission.camera.status;
+            if (status.isGranted) {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+            } else {
+              var result = await Permission.camera.request();
+              if (result.isGranted) {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+              } else {
+
+                Navigator.push(context, MaterialPageRoute(builder: (context) => CameraPermissionScreen(menu: widget.menu)));
+              }
+            }
           },
           child: Text("トレーニング開始"),
         ),
@@ -406,4 +439,5 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 }
+
 
