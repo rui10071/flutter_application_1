@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
@@ -8,14 +9,18 @@ import 'pose_frame.dart';
 import 'main_screen.dart';
 import 'training_model.dart';
 
+
 class ExecutionScreen extends ConsumerStatefulWidget {
   final TrainingMenu menu;
 
+
   ExecutionScreen({required this.menu});
+
 
   @override
   _ExecutionScreenState createState() => _ExecutionScreenState();
 }
+
 
 class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
   late StreamController<PoseFrame> _streamController;
@@ -25,42 +30,45 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
   int _mockSecondsElapsed = 0;
   int _reps = 10;
 
+
   final List<Map<String, dynamic>> _feedbackMessages = [
     {
-      "text": "フォームは安定しています",
+      "text": "良いフォームです！その調子。",
       "icon": Icons.check_circle,
       "color": kPrimaryColor,
       "isError": false,
       "errorPoint": null,
     },
     {
-      "text": "右膝をもう少し曲げましょう",
-      "icon": Icons.error,
+      "text": "腰をもう少し下げましょう。",
+      "icon": Icons.warning_amber_rounded,
       "color": kHighlight,
       "isError": true,
       "errorPoint": "p10",
     },
     {
-      "text": "背筋はまっすぐです",
+      "text": "背筋が伸びています。完璧です。",
       "icon": Icons.check_circle,
       "color": kPrimaryColor,
       "isError": false,
       "errorPoint": null,
     },
     {
-      "text": "腰が落ちすぎないように",
-      "icon": Icons.error,
+      "text": "膝の位置に注意してください。",
+      "icon": Icons.warning_amber_rounded,
       "color": kHighlight,
       "isError": true,
       "errorPoint": "p6",
     },
   ];
 
+
   @override
   void initState() {
     super.initState();
     _streamController = StreamController<PoseFrame>();
     _poseStream = _streamController.stream;
+
 
     _mockTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
       _mockSecondsElapsed++;
@@ -91,10 +99,12 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
         'p10': Offset(size.width * 0.58, size.height * 0.87),
       };
 
+
       final Map<String, Color> pointColors = {};
       final paintOK = kPrimaryColor;
       final paintError = kHighlight;
       final paintAssist = Colors.blue.shade400;
+
 
       for (var key in points.keys) {
         if (key == feedback["errorPoint"]) {
@@ -105,6 +115,7 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
           pointColors[key] = paintOK;
         }
       }
+
 
       if (!_streamController.isClosed) {
         _streamController.add(PoseFrame(
@@ -120,6 +131,7 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
     });
   }
 
+
   @override
   void dispose() {
     _mockTimer.cancel();
@@ -127,34 +139,18 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: Colors.black,
       body: StreamBuilder<PoseFrame>(
         stream: _poseStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Stack(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [kPrimaryColor.withOpacity(0.5), kBackgroundDark],
-                      stops: [0.0, 0.3],
-                    ),
-                  ),
-                ),
+                Container(color: Colors.black),
                 Center(child: CircularProgressIndicator(color: kPrimaryColor)),
               ],
             );
@@ -162,43 +158,29 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
           
           final poseFrame = snapshot.data!;
 
+
           return Stack(
             children: [
-              Positioned.fill(
-                child: Image.network(
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuCdTPV-webaS0Xiajsq7bH2CIBaIO3O5XaCeXBh8vkBDdz2NqExqlvovMC-ZTQdJ5ccPGWhEs1PqFPz49xETuxATsEfGgNcJAIat-noKRhuuhwq_Xs0wHzs6UHzWVXx4CNCGTbRZgJPhtf3CoFM1QbQQVtK3h8eKXpGp_zu4JLOju8cI4fiaEHZb2zX8Hl8gMnW1nu9TFVBOz6_qxftKuInoQifs7M_hM9da_8BDi0uWS4_3Yc81a7_BJx4WKaL2cnTnTNEXaE9nik",
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                ),
-              ),
+              // カメラ映像のプレースホルダー（黒背景）
               Positioned.fill(
                 child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.6),
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.8),
-                      ],
-                      stops: [0.0, 0.4, 1.0],
-                    ),
-                  ),
+                  color: Colors.black, 
                 ),
               ),
               
+              // 骨格描画レイヤー
               _buildSkeleton(poseFrame),
+
 
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      _buildHeader(poseFrame.reps),
+                      _buildHeader(context, poseFrame.reps),
                       Spacer(),
                       _buildFeedback(poseFrame),
-                      SizedBox(height: 16),
+                      SizedBox(height: 24),
                       _buildControls(context),
                     ],
                   ),
@@ -211,126 +193,209 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
     );
   }
 
-  Widget _buildHeader(int reps) {
+
+  Widget _buildHeader(BuildContext context, int reps) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.close, color: Colors.white, size: 24),
+              ),
+            ),
+          ),
+        ),
+        
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    "$reps",
+                    style: TextStyle(
+                      color: Colors.white, 
+                      fontSize: 48, 
+                      fontWeight: FontWeight.bold, 
+                      fontFamily: 'Lexend',
+                      height: 1.0,
+                    ),
+                  ),
+                  Text(
+                    "回数",
+                    style: TextStyle(
+                      color: kPrimaryColor, 
+                      fontSize: 12, 
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: kHighlight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    "LIVE",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _buildFeedback(PoseFrame poseFrame) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           decoration: BoxDecoration(
-            color: kPrimaryColor,
+            color: Colors.black.withOpacity(0.6),
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: poseFrame.isError ? kHighlight.withOpacity(0.5) : kPrimaryColor.withOpacity(0.5),
+              width: 1.5
+            ),
           ),
           child: Row(
             children: [
-              Icon(Icons.camera_alt, color: Colors.white, size: 16),
-              SizedBox(width: 8),
-              Text(
-                "LIVE",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (poseFrame.isError ? kHighlight : kPrimaryColor).withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(poseFrame.feedbackIcon, color: poseFrame.feedbackColor, size: 24),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "AIコーチ",
+                      style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      poseFrame.feedbackText, 
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              "$reps",
-              style: TextStyle(
-                color: Colors.white, 
-                fontSize: 72, 
-                fontWeight: FontWeight.bold, 
-                height: 1.0,
-                shadows: [Shadow(color: Colors.black.withOpacity(0.3), blurRadius: 8)]
-              ),
-            ),
-            Text(
-              "reps",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.9), 
-                fontSize: 24, 
-                height: 1.0
-              ),
-            ),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildFeedback(PoseFrame poseFrame) {
-    return Column(
-      children: [
-        _buildFeedbackCard(
-          icon: poseFrame.feedbackIcon,
-          text: poseFrame.feedbackText,
-          color: poseFrame.feedbackColor,
-          isError: poseFrame.isError,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeedbackCard({required IconData icon, required String text, required Color color, bool isError = false}) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(isError ? 1.0 : 0.3), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 28),
-          SizedBox(width: 16),
-          Expanded(child: Text(text, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500))),
-          SizedBox(width: 8),
-          Icon(Icons.volume_up, color: Colors.white.withOpacity(0.7), size: 24),
-        ],
       ),
     );
   }
+
 
   Widget _buildControls(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: Icon(Icons.mic, color: Colors.white.withOpacity(0.8), size: 30),
-            onPressed: () {},
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(32),
           ),
-          SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              shape: CircleBorder(),
-              backgroundColor: kPrimaryColor,
-              padding: EdgeInsets.all(16),
-            ),
-            child: Icon(Icons.pause, color: kBackgroundDark, size: 36),
-            onPressed: () {},
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildControlButton(Icons.mic_none, () {}),
+              SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => ResultScreen(menu: widget.menu)),
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: kHighlight,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: kHighlight.withOpacity(0.4), blurRadius: 12)],
+                  ),
+                  child: Icon(Icons.stop, color: Colors.white, size: 32),
+                ),
+              ),
+              SizedBox(width: 16),
+              _buildControlButton(Icons.cameraswitch_outlined, () {}),
+            ],
           ),
-          SizedBox(width: 8),
-          IconButton(
-            icon: Icon(Icons.stop, color: Colors.white.withOpacity(0.8), size: 30),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => ResultScreen(menu: widget.menu)),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
+
+
+  Widget _buildControlButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: Icon(icon, color: Colors.white, size: 24),
+      ),
+    );
+  }
+
 
   Widget _buildSkeleton(PoseFrame poseFrame) {
     return IgnorePointer(
@@ -344,46 +409,62 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
   }
 }
 
+
 class SkeletonPainter extends CustomPainter {
-  
   final PoseFrame poseFrame;
   SkeletonPainter({required this.poseFrame});
 
+
   @override
   void paint(Canvas canvas, Size size) {
-    
     final points = poseFrame.points;
     final pointColors = poseFrame.pointColors;
+
+
+    final linePaint = Paint()
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke;
+      
+    final jointPaint = Paint()
+      ..style = PaintingStyle.fill;
+
+
+    void drawConnection(String k1, String k2) {
+      if (points[k1] != null && points[k2] != null) {
+        linePaint.color = (pointColors[k1] ?? Colors.white).withOpacity(0.8);
+        canvas.drawLine(points[k1]!, points[k2]!, linePaint);
+      }
+    }
+
+
+    drawConnection('p1', 'p6');
+    drawConnection('p2', 'p3');
+    drawConnection('p2', 'p4');
+    drawConnection('p3', 'p5');
+    drawConnection('p6', 'p7');
+    drawConnection('p6', 'p8');
+    drawConnection('p7', 'p9');
+    drawConnection('p8', 'p10');
+
 
     for (var entry in points.entries) {
       final key = entry.key;
       final point = entry.value;
-      final paint = Paint()
-        ..strokeWidth = 4
-        ..color = pointColors[key] ?? kPrimaryColor; 
+      final color = pointColors[key] ?? kPrimaryColor;
       
-      canvas.drawCircle(point, 8, paint);
+      canvas.drawCircle(point, 12, Paint()..color = color.withOpacity(0.3));
+      
+      jointPaint.color = color;
+      canvas.drawCircle(point, 6, jointPaint);
+      
+      jointPaint.color = Colors.white;
+      canvas.drawCircle(point, 2, jointPaint);
     }
-    
-    _drawLine(canvas, points['p1'], points['p6'], pointColors['p1'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p2'], points['p3'], pointColors['p2'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p2'], points['p4'], pointColors['p4'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p3'], points['p5'], pointColors['p5'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p6'], points['p7'], pointColors['p6'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p6'], points['p8'], pointColors['p6'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p7'], points['p9'], pointColors['p7'] ?? kPrimaryColor);
-    _drawLine(canvas, points['p8'], points['p10'], pointColors['p10'] ?? kPrimaryColor);
   }
 
-  void _drawLine(Canvas canvas, Offset? p1, Offset? p2, Color color) {
-    if (p1 == null || p2 == null) return;
-    final paint = Paint()
-      ..strokeWidth = 4
-      ..color = color;
-    canvas.drawLine(p1, p2, paint);
-  }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
+
 

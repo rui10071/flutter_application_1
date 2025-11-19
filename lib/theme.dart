@@ -3,77 +3,35 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-const Color kPrimaryColor = Color(0xFF38e07b);
+const Color kPrimaryColor = Color(0xFF39FF14);
+const Color kHighlight = Color(0xFFFF0055);
 
 
-const Color kBackgroundLight = Color(0xFFFFFFFF);
-const Color kCardLight = Color(0xFFF3F4F6);
-const Color kTextLight = Color(0xFF111827);
-const Color kTextLightSecondary = Color(0xFF4B5563);
-
-
-const Color kBackgroundDark = Color(0xFF122017);
-const Color kCardDark = Color(0xFF1a2c22);
-const Color kTextDark = Color(0xFFF9FAFB);
-const Color kTextDarkSecondary = Color(0xFF9CA3AF);
-
-
-const Color kHighlight = Color(0xFFEF4444);
+const Color kBackgroundDark = Color(0xFF000000);
+const Color kCardDark = Color(0xFF121212);
+const Color kTextDark = Color(0xFFFFFFFF);
+const Color kTextDarkSecondary = Color(0xB3FFFFFF);
 
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 
 final TextTheme kTextTheme = TextTheme(
-  displayLarge: GoogleFonts.lexend(fontWeight: FontWeight.w700),
-  displayMedium: GoogleFonts.lexend(fontWeight: FontWeight.w700),
-  displaySmall: GoogleFonts.lexend(fontWeight: FontWeight.w700),
-  headlineLarge: GoogleFonts.lexend(fontWeight: FontWeight.w700),
-  headlineMedium: GoogleFonts.lexend(fontWeight: FontWeight.w700),
-  headlineSmall: GoogleFonts.lexend(fontWeight: FontWeight.w700),
-  titleLarge: GoogleFonts.lexend(fontWeight: FontWeight.w500),
-  titleMedium: GoogleFonts.lexend(fontWeight: FontWeight.w500),
-  titleSmall: GoogleFonts.lexend(fontWeight: FontWeight.w500),
-  bodyLarge: GoogleFonts.notoSansJp(fontWeight: FontWeight.w400),
-  bodyMedium: GoogleFonts.notoSansJp(fontWeight: FontWeight.w400),
-  bodySmall: GoogleFonts.notoSansJp(fontWeight: FontWeight.w400),
-  labelLarge: GoogleFonts.lexend(fontWeight: FontWeight.w500),
-  labelMedium: GoogleFonts.lexend(fontWeight: FontWeight.w500),
-  labelSmall: GoogleFonts.lexend(fontWeight: FontWeight.w500),
-);
-
-
-ThemeData lightTheme = ThemeData(
-  brightness: Brightness.light,
-  primaryColor: kPrimaryColor,
-  scaffoldBackgroundColor: kBackgroundLight,
-  colorScheme: ColorScheme.light(
-    primary: kPrimaryColor,
-    surface: kCardLight,
-    background: kBackgroundLight,
-    onPrimary: Colors.white,
-    onSurface: kTextLight,
-    onBackground: kTextLight,
-    error: kHighlight,
-  ),
-  textTheme: kTextTheme.apply(bodyColor: kTextLight, displayColor: kTextLight),
-  iconTheme: IconThemeData(color: kTextLight),
-  appBarTheme: AppBarTheme(
-    backgroundColor: kBackgroundLight,
-    elevation: 0,
-    iconTheme: IconThemeData(color: kTextLight),
-    titleTextStyle: kTextTheme.titleLarge?.copyWith(color: kTextLight),
-  ),
-  cardTheme: CardThemeData(
-    color: kCardLight,
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-  ),
-  bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: Colors.white,
-    selectedItemColor: kPrimaryColor,
-    unselectedItemColor: kTextLightSecondary,
-  ),
+  displayLarge: GoogleFonts.lexend(fontWeight: FontWeight.bold, color: kTextDark),
+  displayMedium: GoogleFonts.lexend(fontWeight: FontWeight.bold, color: kTextDark),
+  displaySmall: GoogleFonts.lexend(fontWeight: FontWeight.bold, color: kTextDark),
+  headlineLarge: GoogleFonts.lexend(fontWeight: FontWeight.w700, color: kTextDark),
+  headlineMedium: GoogleFonts.lexend(fontWeight: FontWeight.w700, color: kTextDark),
+  headlineSmall: GoogleFonts.lexend(fontWeight: FontWeight.w700, color: kTextDark),
+  titleLarge: GoogleFonts.lexend(fontWeight: FontWeight.w600, color: kTextDark),
+  titleMedium: GoogleFonts.lexend(fontWeight: FontWeight.w600, color: kTextDark),
+  titleSmall: GoogleFonts.lexend(fontWeight: FontWeight.w600, color: kTextDark),
+  bodyLarge: GoogleFonts.notoSansJp(fontWeight: FontWeight.w400, color: kTextDark),
+  bodyMedium: GoogleFonts.notoSansJp(fontWeight: FontWeight.w400, color: kTextDarkSecondary),
+  bodySmall: GoogleFonts.notoSansJp(fontWeight: FontWeight.w400, color: kTextDarkSecondary),
+  labelLarge: GoogleFonts.lexend(fontWeight: FontWeight.w600, color: kTextDark),
+  labelMedium: GoogleFonts.lexend(fontWeight: FontWeight.w500, color: kTextDark),
+  labelSmall: GoogleFonts.lexend(fontWeight: FontWeight.w500, color: kTextDarkSecondary),
 );
 
 
@@ -83,31 +41,94 @@ ThemeData darkTheme = ThemeData(
   scaffoldBackgroundColor: kBackgroundDark,
   colorScheme: ColorScheme.dark(
     primary: kPrimaryColor,
+    secondary: kPrimaryColor,
     surface: kCardDark,
     background: kBackgroundDark,
-    onPrimary: kTextDark,
+    onPrimary: Colors.black,
+    onSecondary: Colors.black,
     onSurface: kTextDark,
     onBackground: kTextDark,
     error: kHighlight,
   ),
-  textTheme: kTextTheme.apply(bodyColor: kTextDark, displayColor: kTextDark),
+  textTheme: kTextTheme,
   iconTheme: IconThemeData(color: kTextDark),
   appBarTheme: AppBarTheme(
-    backgroundColor: kBackgroundDark,
+    backgroundColor: Colors.transparent,
     elevation: 0,
+    centerTitle: true,
     iconTheme: IconThemeData(color: kTextDark),
-    titleTextStyle: kTextTheme.titleLarge?.copyWith(color: kTextDark),
+    titleTextStyle: GoogleFonts.lexend(
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: kTextDark,
+    ),
   ),
   cardTheme: CardThemeData(
     color: kCardDark,
     elevation: 0,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+      side: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+    ),
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: kCardDark,
+    backgroundColor: kBackgroundDark,
     selectedItemColor: kPrimaryColor,
-    unselectedItemColor: kTextDarkSecondary,
+    unselectedItemColor: Colors.white38,
+    type: BottomNavigationBarType.fixed,
+    elevation: 0,
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: kPrimaryColor,
+      foregroundColor: Colors.black,
+      elevation: 0,
+      textStyle: GoogleFonts.lexend(fontWeight: FontWeight.bold),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      foregroundColor: kPrimaryColor,
+      side: BorderSide(color: kPrimaryColor),
+      textStyle: GoogleFonts.lexend(fontWeight: FontWeight.bold),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: kPrimaryColor,
+      textStyle: GoogleFonts.lexend(fontWeight: FontWeight.bold),
+    ),
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white.withOpacity(0.05),
+    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: kPrimaryColor),
+    ),
+    hintStyle: GoogleFonts.notoSansJp(color: Colors.white38),
+    labelStyle: GoogleFonts.notoSansJp(color: Colors.white70),
+  ),
+  dividerTheme: DividerThemeData(
+    color: Colors.white.withOpacity(0.1),
+    thickness: 1,
   ),
 );
+
+
+ThemeData lightTheme = darkTheme;
 
 

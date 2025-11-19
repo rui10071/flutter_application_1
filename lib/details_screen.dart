@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'theme.dart';
 import 'execution_screen.dart';
 import 'training_model.dart';
@@ -19,11 +21,13 @@ class DetailsScreen extends StatefulWidget {
 }
 
 
-class _DetailsScreenState extends State<DetailsScreen> {
+class _DetailsScreenState extends State<DetailsScreen> with SingleTickerProviderStateMixin {
   late VideoPlayerController _controller;
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  
   String _selectedTime = '30秒';
   int _selectedSets = 1;
-  int _calculatedCalories = 50;
 
 
   List<String> _timeOptions = ['30秒', '45秒', '60秒'];
@@ -34,6 +38,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
   void initState() {
     super.initState();
     
+    _animController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutQuad),
+    );
+    _animController.forward();
+
+
     String videoPath = "assets/images/${widget.menu.id}.mp4";
     _controller = VideoPlayerController.asset(videoPath)
       ..initialize().then((_) {
@@ -41,10 +55,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         _controller.play();
         _controller.setLooping(true);
         _controller.setVolume(0.0);
-      }).catchError((error) {
-        print("動画の読み込みに失敗しました: $videoPath");
-
-      });
+      }).catchError((error) {});
     
     if (widget.menu.category == "ヨガ" || widget.menu.category == "コア") {
       _timeOptions = ['30秒', '60秒', '90秒'];
@@ -53,120 +64,103 @@ class _DetailsScreenState extends State<DetailsScreen> {
       _timeOptions = ['10回', '12回', '15回'];
       _selectedTime = '10回';
     }
-    _recalculateCalories();
   }
 
 
   @override
   void dispose() {
     _controller.dispose();
+    _animController.dispose();
     super.dispose();
-  }
-
-
-  void _recalculateCalories() {
-    double baseCalories = 50.0;
-    setState(() {
-      _calculatedCalories = (baseCalories * _selectedSets).round();
-    });
   }
 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
+          Positioned.fill(
+            child: widget.menu.isAsset
+                ? Image.asset(widget.menu.imagePath, fit: BoxFit.cover)
+                : CachedNetworkImage(
+                    imageUrl: widget.menu.imagePath,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: Colors.black),
+                    errorWidget: (context, url, error) => Container(color: Color(0xFF122017)),
+                  ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.8),
+                    Colors.black,
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             bottom: false,
-            child: ListView(
-              padding: EdgeInsets.only(bottom: 120),
-              children: [
-                _buildAppBar(context),
-                _buildVideoPlayer(),
-                _buildInfoCards(),
-                _buildSection(context, title: "概要",
-                  child: Text(
-                    widget.menu.overview,
-                    style: TextStyle(color: kTextDarkSecondary, height: 1.6),
-                  ),
-                ),
-                _buildSection(context, title: "必要な器具",
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.sentiment_very_satisfied, color: kPrimaryColor),
-                          SizedBox(width: 12),
-                          Text("器具は必要ありません", style: TextStyle(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                children: [
+                  _buildAppBar(context),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 120),
+                      children: [
+                        _buildVideoPlayer(),
+                        SizedBox(height: 24),
+                        _buildInfoCards(),
+                        SizedBox(height: 24),
+                        _buildGlassSection(
+                          title: "概要",
+                          child: Text(
+                            widget.menu.overview,
+                            style: TextStyle(color: Colors.white70, height: 1.6, fontSize: 14),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSmallGlassInfo(Icons.build, "器具なし")),
+                            SizedBox(width: 12),
+                            Expanded(child: _buildSmallGlassInfo(Icons.videocam, widget.menu.requiredAngle)),
+                          ],
+                        ),
+                        SizedBox(height: 24),
+                        _buildGlassSection(
+                          title: "やり方",
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: widget.menu.howTo.asMap().entries.map((entry) {
+                              return _buildInstructionStep((entry.key + 1).toString(), entry.value);
+                            }).toList(),
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        _buildGlassSection(
+                          title: "コツ・注意点",
+                          child: Column(
+                            children: widget.menu.tips.map((tip) => _buildTip(tip)).toList(),
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        _buildTargetBodyParts(),
+                      ],
                     ),
                   ),
-                ),
-                 _buildSection(context, title: "推奨アングル",
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.videocam_outlined, color: kPrimaryColor),
-                          SizedBox(width: 12),
-                          Text(widget.menu.requiredAngle, style: TextStyle(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                _buildSection(context, title: "やり方",
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: widget.menu.howTo.asMap().entries.map((entry) {
-                          return _buildInstructionStep((entry.key + 1).toString(), entry.value);
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ),
-                _buildSection(context, title: "コツ・注意点",
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: kPrimaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border(left: BorderSide(color: kPrimaryColor, width: 4)),
-                    ),
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      children: widget.menu.tips.map((tip) => _buildTip(tip)).toList(),
-                    ),
-                  ),
-                ),
-                _buildSection(context, title: "鍛えられる部位",
-                  child: Card(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16.0),
-                      child: Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: widget.menu.targetBodyParts.map((part) {
-                          return Chip(
-                            label: Text(part),
-                            backgroundColor: kPrimaryColor.withOpacity(0.1),
-                            labelStyle: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500),
-                            side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ),
-                _buildRelatedWorkouts(context),
-              ],
+                ],
+              ),
             ),
           ),
           _buildStartButton(context),
@@ -178,15 +172,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   Widget _buildAppBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyLarge?.color),
+            icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          Text(widget.menu.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(
+              widget.menu.title, 
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+          ),
           SizedBox(width: 48),
         ],
       ),
@@ -195,110 +195,137 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
 
   Widget _buildVideoPlayer() {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: Container(
-        color: Colors.grey[800],
-        child: _controller.value.isInitialized
-            ? VideoPlayer(_controller)
-            : Center(child: CircularProgressIndicator(color: kPrimaryColor)),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          children: [
+            Container(color: Colors.black54),
+            if (_controller.value.isInitialized) VideoPlayer(_controller),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
 
   Widget _buildInfoCards() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          _buildDropdownCard("回数/時間", _selectedTime, _timeOptions, (val) {
-            setState(() { _selectedTime = val!; _recalculateCalories(); });
-          }),
-          SizedBox(width: 16),
-           _buildDropdownCard("セット", "${_selectedSets}セット", _setOptions.map((s) => "${s}セット").toList(), (val) {
-            setState(() { _selectedSets = int.parse(val!.replaceAll("セット", "")); _recalculateCalories(); });
-          }),
-          SizedBox(width: 16),
-          _buildInfoCard("消費カロリー", "$_calculatedCalories kcal"),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildInfoCard(String title, String value) {
-    return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            children: [
-              Text(title, style: TextStyle(color: kTextDarkSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
-              SizedBox(height: 4),
-              Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-        ),
-      ),
+    return Row(
+      children: [
+        _buildDropdownCard("回数/時間", _selectedTime, _timeOptions, (val) {
+          setState(() { _selectedTime = val!; });
+        }),
+        SizedBox(width: 12),
+        _buildDropdownCard("セット数", "${_selectedSets} セット", _setOptions.map((s) => "${s} セット").toList(), (val) {
+          setState(() { _selectedSets = int.parse(val!.replaceAll(" セット", "")); });
+        }),
+      ],
     );
   }
 
 
   Widget _buildDropdownCard(String title, String value, List<String> items, ValueChanged<String?> onChanged) {
     return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-          child: Column(
-            children: [
-              Text(title, style: TextStyle(color: kTextDarkSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
-              Container(
-                height: 30,
-                child: DropdownButton<String>(
-                  value: value,
-                  items: items.map((String item) {
-                    return DropdownMenuItem<String>(
-                      value: item,
-                      child: Text(item, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    );
-                  }).toList(),
-                  onChanged: onChanged,
-                  underline: Container(),
-                  isExpanded: true,
-                  icon: Icon(Icons.arrow_drop_down, size: 20),
-                ),
+      child: _buildGlassContainer(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: TextStyle(color: Colors.white54, fontSize: 10)),
+            DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                dropdownColor: Color(0xFF1a2c22),
+                isExpanded: true,
+                icon: Icon(Icons.keyboard_arrow_down, color: kPrimaryColor, size: 16),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                items: items.map((String item) {
+                  return DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item),
+                  );
+                }).toList(),
+                onChanged: onChanged,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
 
-  Widget _buildSection(BuildContext context, {required String title, required Widget child}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildGlassContainer({required Widget child, EdgeInsetsGeometry? padding}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: padding ?? EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildSmallGlassInfo(IconData icon, String text) {
+    return _buildGlassContainer(
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          SizedBox(height: 12),
-          child,
+          Icon(icon, color: Colors.white70, size: 16),
+          SizedBox(width: 8),
+          Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
         ],
       ),
     );
   }
 
 
+  Widget _buildGlassSection({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+        SizedBox(height: 12),
+        _buildGlassContainer(child: child),
+      ],
+    );
+  }
+
+
   Widget _buildInstructionStep(String number, String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("$number. ", style: TextStyle(color: kTextDarkSecondary, height: 1.6)),
-          Expanded(child: Text(text, style: TextStyle(color: kTextDarkSecondary, height: 1.6))),
+          Container(
+            width: 20,
+            height: 20,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Text(number, style: TextStyle(color: kPrimaryColor, fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+          SizedBox(width: 12),
+          Expanded(child: Text(text, style: TextStyle(color: Colors.white70, height: 1.5, fontSize: 13))),
         ],
       ),
     );
@@ -307,89 +334,38 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   Widget _buildTip(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle, color: kPrimaryColor, size: 18),
-          SizedBox(width: 8),
-          Expanded(child: Text(text, style: TextStyle(fontSize: 14))),
+          Icon(Icons.check_circle_outline, color: kPrimaryColor, size: 18),
+          SizedBox(width: 10),
+          Expanded(child: Text(text, style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.5))),
         ],
       ),
     );
   }
   
-  Widget _buildRelatedWorkouts(BuildContext context) {
-    final relatedItems = DUMMY_TRAININGS
-        .where((menu) => menu.id != widget.menu.id)
-        .take(3)
-        .toList();
-    
+  Widget _buildTargetBodyParts() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text("こちらもおすすめ", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-        ),
+        Text("鍛えられる部位", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
         SizedBox(height: 12),
-        Container(
-          height: 140,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: relatedItems.length,
-            itemBuilder: (context, index) {
-              final item = relatedItems[index];
-              final Widget imageWidget = item.isAsset
-                ? Image.asset(
-                    item.imagePath,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  )
-                : Image.network(
-                    item.imagePath,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  );
-
-
-              return Container(
-                width: 192,
-                margin: EdgeInsets.only(right: 16),
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: imageWidget,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              SizedBox(height: 2),
-                              Text(item.description, style: TextStyle(color: kTextDarkSecondary, fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+        Wrap(
+          spacing: 8.0,
+          runSpacing: 8.0,
+          children: widget.menu.targetBodyParts.map((part) {
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+              ),
+              child: Text(part, style: TextStyle(color: Colors.white, fontSize: 12)),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -401,39 +377,41 @@ class _DetailsScreenState extends State<DetailsScreen> {
       bottom: 0,
       left: 0,
       right: 0,
-      child: Container(
-        padding: const EdgeInsets.all(16.0).copyWith(bottom: MediaQuery.of(context).padding.bottom + 16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1)),
-        ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kPrimaryColor,
-            foregroundColor: Colors.white,
-            minimumSize: Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(20.0).copyWith(bottom: MediaQuery.of(context).padding.bottom + 16),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
             ),
-            textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Lexend'),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: Colors.black,
+                minimumSize: Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              onPressed: () async {
+                var status = await Permission.camera.status;
+                if (status.isGranted) {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+                } else {
+                  var result = await Permission.camera.request();
+                  if (result.isGranted) {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+                  } else {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => CameraPermissionScreen(menu: widget.menu)));
+                  }
+                }
+              },
+              child: Text("トレーニング開始", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+            ),
           ),
-          onPressed: () async {
-
-            
-            var status = await Permission.camera.status;
-            if (status.isGranted) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
-            } else {
-              var result = await Permission.camera.request();
-              if (result.isGranted) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
-              } else {
-
-                Navigator.push(context, MaterialPageRoute(builder: (context) => CameraPermissionScreen(menu: widget.menu)));
-              }
-            }
-          },
-          child: Text("トレーニング開始"),
         ),
       ),
     );

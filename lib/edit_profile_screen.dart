@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // 追加
 import 'theme.dart';
 import 'profile_screen.dart'; 
 
@@ -40,16 +42,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : kTextLight;
-    final hintColor = isDark ? kTextDarkSecondary : kTextLightSecondary;
-    
     return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text("プロフィールを編集", style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+        title: Text("プロフィール編集", style: TextStyle(fontFamily: 'Lexend', fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        iconTheme: IconThemeData(color: textColor),
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -60,122 +60,124 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ref.read(userProfileProvider.notifier).updateWeight(_weightController.text);
                 Navigator.pop(context);
               },
-              child: Text("保存", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 16)),
+              child: Text("保存", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 14, fontFamily: 'Lexend', letterSpacing: 1.0)),
             ),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: Stack(
         children: [
-          SizedBox(height: 16),
-          Center(
-            child: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 56,
-                  backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.5),
+                    Colors.black,
+                  ],
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: kPrimaryColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(width: 2, color: Theme.of(context).scaffoldBackgroundColor)
-                    ),
-                    child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                    padding: EdgeInsets.all(6),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(24.0),
+              children: [
+                Center(
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        padding: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: kPrimaryColor.withOpacity(0.5)),
+                        ),
+                        child: ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop",
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(color: Colors.grey[900]),
+                            errorWidget: (context, url, error) => Icon(Icons.person, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: kPrimaryColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [BoxShadow(color: kPrimaryColor.withOpacity(0.4), blurRadius: 8)],
+                          ),
+                          child: IconButton(
+                            icon: Icon(Icons.camera_alt, color: Colors.black, size: 20),
+                            onPressed: () {},
+                            constraints: BoxConstraints.tightFor(width: 36, height: 36),
+                            padding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                SizedBox(height: 40),
+                _buildGlassTextField("名前", _nameController),
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(child: _buildGlassTextField("身長", _heightController, suffix: "cm", isNumber: true)),
+                    SizedBox(width: 20),
+                    Expanded(child: _buildGlassTextField("体重", _weightController, suffix: "kg", isNumber: true)),
+                  ],
+                ),
+                SizedBox(height: 20),
+                _buildGlassTextField("メールアドレス", _emailController, enabled: false),
               ],
             ),
           ),
-          SizedBox(height: 32),
-          TextField(
-            controller: _nameController,
-            style: TextStyle(color: textColor),
-            decoration: InputDecoration(
-              labelText: "名前",
-              labelStyle: TextStyle(color: hintColor),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: kPrimaryColor),
-              ),
-            ),
-          ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _heightController,
-                  style: TextStyle(color: textColor),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: "身長",
-                    suffixText: "cm",
-                    labelStyle: TextStyle(color: hintColor),
-                    suffixStyle: TextStyle(color: hintColor),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: kPrimaryColor),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: TextField(
-                  controller: _weightController,
-                  style: TextStyle(color: textColor),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: "体重",
-                    suffixText: "kg",
-                    labelStyle: TextStyle(color: hintColor),
-                    suffixStyle: TextStyle(color: hintColor),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: kPrimaryColor),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          TextField(
-            controller: _emailController,
-            enabled: false,
-            style: TextStyle(color: textColor),
-            decoration: InputDecoration(
-              labelText: "メールアドレス",
-              labelStyle: TextStyle(color: hintColor),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade200,
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+
+  Widget _buildGlassTextField(String label, TextEditingController controller, {String? suffix, bool isNumber = false, bool enabled = true}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white54, fontSize: 12, fontFamily: 'Lexend', fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: TextFormField(
+              controller: controller,
+              enabled: enabled,
+              keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+              style: TextStyle(color: enabled ? Colors.white : Colors.white38, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                suffixText: suffix,
+                suffixStyle: TextStyle(color: Colors.white54, fontSize: 12),
+                filled: true,
+                fillColor: enabled ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.02),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                enabledBorder: InputBorder.none,
+                focusedBorder:  OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: kPrimaryColor, width: 1),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

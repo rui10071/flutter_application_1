@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -7,12 +8,11 @@ import 'training_model.dart';
 import 'main_screen.dart';
 
 
-// フィルター状態を管理するクラス
 class FilterState {
   final String category;
   final String difficulty;
   final String goal;
-  final String sortOrder; // default, duration_asc, duration_desc
+  final String sortOrder;
 
 
   FilterState({
@@ -46,7 +46,6 @@ final filteredTrainingProvider = Provider<List<TrainingMenu>>((ref) {
   List<TrainingMenu> list = DUMMY_TRAININGS;
 
 
-  // テキスト検索
   if (searchQuery.isNotEmpty) {
     list = list.where((menu) =>
       menu.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
@@ -55,19 +54,16 @@ final filteredTrainingProvider = Provider<List<TrainingMenu>>((ref) {
   }
 
 
-  // カテゴリフィルター
   if (filter.category != "すべて") {
     list = list.where((menu) => menu.category == filter.category).toList();
   }
 
 
-  // 難易度フィルター
   if (filter.difficulty != "すべて") {
     list = list.where((menu) => menu.difficulty.contains(filter.difficulty)).toList();
   }
 
 
-  // 目的フィルター（簡易的なキーワードマッチング）
   if (filter.goal != "すべて") {
     if (filter.goal == "筋トレ") {
       list = list.where((menu) => menu.overview.contains("筋肉") || menu.category != "ヨガ").toList();
@@ -79,7 +75,6 @@ final filteredTrainingProvider = Provider<List<TrainingMenu>>((ref) {
   }
 
 
-  // ソート処理
   if (filter.sortOrder == "時間が短い順") {
     list.sort((a, b) => _parseDuration(a.duration).compareTo(_parseDuration(b.duration)));
   } else if (filter.sortOrder == "時間が長い順") {
@@ -102,13 +97,30 @@ class SelectionScreen extends ConsumerStatefulWidget {
 }
 
 
-class _SelectionScreenState extends ConsumerState<SelectionScreen> {
+class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutQuad),
+    );
+    _controller.forward();
+  }
 
 
   @override
   void dispose() {
     _searchController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -119,67 +131,84 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     final _searchQuery = ref.watch(searchQueryProvider);
     final _currentFilter = ref.watch(trainingFilterProvider);
     
-    // フィルターがアクティブかどうか（バッジ表示用）
     bool isFilterActive = _currentFilter.category != "すべて" || 
                           _currentFilter.difficulty != "すべて" || 
                           _currentFilter.goal != "すべて";
 
 
     return Scaffold(
+      backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(context, ref),
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [kPrimaryColor.withOpacity(0.5), kBackgroundDark],
-                stops: [0.0, 0.3],
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2940&auto=format&fit=crop",
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: Colors.black),
+              errorWidget: (context, url, error) => Container(color: Color(0xFF122017)),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.black.withOpacity(0.5),
+                    Colors.black.withOpacity(0.9),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                ),
               ),
             ),
           ),
           SafeArea(
             bottom: false,
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: _buildSearchBar(context, ref, isFilterActive)),
-                
-                if (_searchQuery.isEmpty && !isFilterActive) ...[
-                  SliverToBoxAdapter(child: _buildFeaturedSection(context)),
-                  SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  SliverToBoxAdapter(child: _buildRankingSection(context)),
-                  SliverToBoxAdapter(child: SizedBox(height: 24)),
-                ],
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: _buildSearchBar(context, ref, isFilterActive)),
+                  
+                  if (_searchQuery.isEmpty && !isFilterActive) ...[
+                    SliverToBoxAdapter(child: _buildFeaturedSection(context)),
+                    SliverToBoxAdapter(child: SizedBox(height: 32)),
+                    SliverToBoxAdapter(child: _buildRankingSection(context)),
+                    SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  ],
 
 
-                if (isFilterActive)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: Row(
-                        children: [
-                          Icon(Icons.filter_list, size: 16, color: kPrimaryColor),
-                          SizedBox(width: 8),
-                          Text(
-                            "絞り込み結果: ${_filteredList.length}件", 
-                            style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)
-                          ),
-                          Spacer(),
-                          GestureDetector(
-                            onTap: () => ref.refresh(trainingFilterProvider),
-                            child: Text("リセット", style: TextStyle(color: Colors.white54, fontSize: 12)),
-                          ),
-                        ],
+                  if (isFilterActive)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.filter_list, size: 16, color: kPrimaryColor),
+                            SizedBox(width: 8),
+                            Text(
+                              "検索結果: ${_filteredList.length}件", 
+                              style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontFamily: 'Lexend')
+                            ),
+                            Spacer(),
+                            GestureDetector(
+                              onTap: () => ref.refresh(trainingFilterProvider),
+                              child: Text("リセット", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                
-                _buildGrid(context, _filteredList),
-                
-                SliverToBoxAdapter(child: SizedBox(height: 100)), 
-              ],
+                  
+                  _buildGrid(context, _filteredList),
+                  
+                  SliverToBoxAdapter(child: SizedBox(height: 120)), 
+                ],
+              ),
             ),
           ),
         ],
@@ -199,51 +228,49 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
           ref.read(mainNavIndexProvider.notifier).state = 0;
         },
       ),
-      title: Text("トレーニング", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+      title: Text(
+        "トレーニング", 
+        style: TextStyle(fontFamily: 'Lexend', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20)
+      ),
     );
   }
 
 
   Widget _buildSearchBar(BuildContext context, WidgetRef ref, bool isFilterActive) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(color: Colors.white),
-              onChanged: (value) {
-                ref.read(searchQueryProvider.notifier).state = value;
-              },
-              decoration: InputDecoration(
-                hintText: "トレーニングを検索",
-                hintStyle: TextStyle(color: kTextDarkSecondary),
-                prefixIcon: Icon(Icons.search, color: kTextDarkSecondary, size: 20),
-                suffixIcon: ref.watch(searchQueryProvider).isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: kTextDarkSecondary, size: 20),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(searchQueryProvider.notifier).state = "";
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(color: Colors.white),
+                  onChanged: (value) {
+                    ref.read(searchQueryProvider.notifier).state = value;
+                  },
+                  decoration: InputDecoration(
+                    hintText: "トレーニングを検索...",
+                    hintStyle: TextStyle(color: Colors.white38),
+                    prefixIcon: Icon(Icons.search, color: Colors.white54, size: 20),
+                    suffixIcon: ref.watch(searchQueryProvider).isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear, color: Colors.white54, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(searchQueryProvider.notifier).state = "";
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: kPrimaryColor),
-                ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               ),
             ),
           ),
@@ -252,18 +279,24 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
             onTap: () {
               _showFilterModal(context, ref);
             },
-            child: Container(
-              height: 52,
-              width: 52,
-              decoration: BoxDecoration(
-                color: isFilterActive ? kPrimaryColor : Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isFilterActive ? kPrimaryColor : Colors.white.withOpacity(0.1)),
-              ),
-              child: Icon(
-                Icons.tune, 
-                color: isFilterActive ? Colors.white : Colors.white70,
-                size: 24
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: isFilterActive ? kPrimaryColor.withOpacity(0.8) : Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: Icon(
+                    Icons.tune, 
+                    color: isFilterActive ? Colors.white : Colors.white70,
+                    size: 20
+                  ),
+                ),
               ),
             ),
           ),
@@ -291,58 +324,72 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text("今週のトレンド", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Text("今週のトレンド", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)),
         ),
-        SizedBox(height: 12),
+        SizedBox(height: 16),
         GestureDetector(
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: featuredItem)));
           },
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            height: 180,
+            margin: EdgeInsets.symmetric(horizontal: 24),
+            height: 200,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              image: DecorationImage(
-                image: featuredItem.isAsset 
-                  ? AssetImage(featuredItem.imagePath) as ImageProvider
-                  : NetworkImage(featuredItem.imagePath),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.3), BlendMode.darken),
-              ),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
+                  color: kPrimaryColor.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
                 ),
               ],
             ),
-            child: Stack(
-              children: [
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: kPrimaryColor,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text("PICK UP", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                      SizedBox(height: 8),
-                      Text(featuredItem.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                      Text(featuredItem.description, style: TextStyle(color: Colors.white70, fontSize: 12)),
-                    ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: featuredItem.isAsset 
+                      ? Image.asset(featuredItem.imagePath, fit: BoxFit.cover)
+                      : CachedNetworkImage(imageUrl: featuredItem.imagePath, fit: BoxFit.cover),
                   ),
-                ),
-              ],
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                          stops: [0.4, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: kPrimaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text("PICK UP", style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                        ),
+                        SizedBox(height: 8),
+                        Text(featuredItem.title, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 4),
+                        Text(featuredItem.description, style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -359,21 +406,21 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("人気ランキング", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+              Text("人気ランキング", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)),
               Icon(Icons.emoji_events_outlined, color: Colors.amber, size: 20),
             ],
           ),
         ),
-        SizedBox(height: 12),
+        SizedBox(height: 16),
         Container(
           height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 24),
             itemCount: rankingItems.length,
             itemBuilder: (context, index) {
               final item = rankingItems[index];
@@ -392,8 +439,8 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
         Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)));
       },
       child: Container(
-        width: 140,
-        margin: EdgeInsets.only(right: 12),
+        width: 120,
+        margin: EdgeInsets.only(right: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -401,8 +448,9 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
               children: [
                 Container(
                   height: 100,
+                  width: 120,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     image: DecorationImage(
                       image: item.isAsset 
                         ? AssetImage(item.imagePath) as ImageProvider
@@ -412,19 +460,26 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
                   ),
                 ),
                 Positioned(
-                  top: 0,
-                  left: 0,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: rank == 1 ? Colors.amber : (rank == 2 ? Colors.grey[300] : (rank == 3 ? Colors.brown[300] : Colors.black54)),
-                      borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "$rank",
-                        style: TextStyle(color: rank <= 3 ? Colors.black : Colors.white, fontWeight: FontWeight.bold),
+                  top: 8,
+                  left: 8,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "$rank",
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -432,8 +487,8 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
               ],
             ),
             SizedBox(height: 8),
-            Text(item.title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-            Text(item.difficulty, style: TextStyle(fontSize: 10, color: kTextDarkSecondary)),
+            Text(item.title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(item.difficulty, style: TextStyle(fontSize: 10, color: Colors.white54)),
           ],
         ),
       ),
@@ -447,9 +502,15 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: Center(
-            child: Text(
-              "該当するトレーニングはありません",
-              style: TextStyle(color: kTextDarkSecondary),
+            child: Column(
+              children: [
+                Icon(Icons.search_off, color: Colors.white24, size: 48),
+                SizedBox(height: 16),
+                Text(
+                  "該当するトレーニングはありません",
+                  style: TextStyle(color: Colors.white38),
+                ),
+              ],
             ),
           ),
         ),
@@ -457,74 +518,80 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> {
     }
     
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       sliver: SliverGrid(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.75,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final item = _filteredList[index];
-            final Widget imageWidget;
-            
-            if (item.isAsset) {
-              imageWidget = Image.asset(
-                  item.imagePath,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                );
-            } else {
-              imageWidget = CachedNetworkImage(
-                imageUrl: item.imagePath,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                placeholder: (context, url) => Container(color: Colors.grey[800]),
-                errorWidget: (context, url, error) => Icon(Icons.error, color: kHighlight),
-              );
-            }
+            final Widget imageWidget = item.isAsset
+                ? Image.asset(item.imagePath, fit: BoxFit.cover, width: double.infinity)
+                : CachedNetworkImage(
+                    imageUrl: item.imagePath,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    placeholder: (context, url) => Container(color: Color(0xFF122017)),
+                    errorWidget: (context, url, error) => Icon(Icons.error, color: kHighlight),
+                  );
                 
             return GestureDetector(
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(menu: item)));
               },
-              child: Card(
-                clipBehavior: Clip.antiAlias,
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Positioned.fill(child: imageWidget),
-                          if (item.difficulty == "上級")
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text("上級", style: TextStyle(color: kHighlight, fontSize: 10, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                        ],
+                    Positioned.fill(child: imageWidget),
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                            stops: [0.5, 1.0],
+                          ),
+                        ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
+                    if (item.difficulty == "上級")
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              color: Colors.red.withOpacity(0.6),
+                              child: Text("上級", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.title, style: TextStyle(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis,),
-                          SizedBox(height: 2),
-                          Text(item.description, style: TextStyle(color: kTextDarkSecondary, fontSize: 12)),
+                          Text(item.title, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.access_time, color: kPrimaryColor, size: 12),
+                              SizedBox(width: 4),
+                              Text(item.duration, style: TextStyle(color: Colors.white70, fontSize: 11)),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -547,51 +614,57 @@ class _FilterModal extends ConsumerWidget {
     final filterState = ref.watch(trainingFilterProvider);
 
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(24),
-              children: [
-                _buildFilterSection(
-                  context, 
-                  title: "部位・カテゴリ",
-                  options: ["すべて", "上半身", "下半身", "コア", "ヨガ"],
-                  selectedValue: filterState.category,
-                  onSelected: (val) => ref.read(trainingFilterProvider.notifier).state = filterState.copyWith(category: val),
-                ),
-                SizedBox(height: 24),
-                _buildFilterSection(
-                  context, 
-                  title: "難易度",
-                  options: ["すべて", "初級", "中級", "上級"],
-                  selectedValue: filterState.difficulty,
-                  onSelected: (val) => ref.read(trainingFilterProvider.notifier).state = filterState.copyWith(difficulty: val),
-                ),
-                SizedBox(height: 24),
-                _buildFilterSection(
-                  context, 
-                  title: "目的",
-                  options: ["すべて", "筋トレ", "ダイエット", "健康・ヨガ"],
-                  selectedValue: filterState.goal,
-                  onSelected: (val) => ref.read(trainingFilterProvider.notifier).state = filterState.copyWith(goal: val),
-                ),
-                SizedBox(height: 24),
-                Text("並び替え", style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: kTextDarkSecondary)),
-                SizedBox(height: 12),
-                _buildSortDropdown(context, ref, filterState),
-              ],
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: BoxDecoration(
+            color: Color(0xFF122017).withOpacity(0.9),
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
           ),
-          _buildFooter(context, ref),
-        ],
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.all(24),
+                  children: [
+                    _buildFilterSection(
+                      context, 
+                      title: "カテゴリ",
+                      options: ["すべて", "上半身", "下半身", "コア", "ヨガ"],
+                      selectedValue: filterState.category,
+                      onSelected: (val) => ref.read(trainingFilterProvider.notifier).state = filterState.copyWith(category: val),
+                    ),
+                    SizedBox(height: 32),
+                    _buildFilterSection(
+                      context, 
+                      title: "難易度",
+                      options: ["すべて", "初級", "中級", "上級"],
+                      selectedValue: filterState.difficulty,
+                      onSelected: (val) => ref.read(trainingFilterProvider.notifier).state = filterState.copyWith(difficulty: val),
+                    ),
+                    SizedBox(height: 32),
+                    _buildFilterSection(
+                      context, 
+                      title: "目的",
+                      options: ["すべて", "筋トレ", "ダイエット", "健康・ヨガ"],
+                      selectedValue: filterState.goal,
+                      onSelected: (val) => ref.read(trainingFilterProvider.notifier).state = filterState.copyWith(goal: val),
+                    ),
+                    SizedBox(height: 32),
+                    Text("並び替え", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 14)),
+                    SizedBox(height: 16),
+                    _buildSortDropdown(context, ref, filterState),
+                  ],
+                ),
+              ),
+              _buildFooter(context, ref),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -599,13 +672,13 @@ class _FilterModal extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("検索条件の絞り込み", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text("絞り込み検索", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
           IconButton(
-            icon: Icon(Icons.close, color: kTextDarkSecondary),
+            icon: Icon(Icons.close, color: Colors.white70),
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -618,23 +691,32 @@ class _FilterModal extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: kTextDarkSecondary)),
-        SizedBox(height: 12),
+        Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 14)),
+        SizedBox(height: 16),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 10,
+          runSpacing: 10,
           children: options.map((option) {
             final isSelected = selectedValue == option;
-            return ChoiceChip(
-              label: Text(option),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) onSelected(option);
-              },
-              selectedColor: kPrimaryColor,
-              backgroundColor: Colors.white.withOpacity(0.05),
-              labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.white70, fontWeight: FontWeight.w500),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.transparent)),
+            return GestureDetector(
+              onTap: () => onSelected(option),
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? kPrimaryColor : Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isSelected ? kPrimaryColor : Colors.white.withOpacity(0.1)),
+                ),
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
             );
           }).toList(),
         ),
@@ -645,16 +727,18 @@ class _FilterModal extends ConsumerWidget {
 
   Widget _buildSortDropdown(BuildContext context, WidgetRef ref, FilterState state) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: state.sortOrder,
           dropdownColor: Color(0xFF1a2c22),
           isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down, color: Colors.white70),
           items: ["おすすめ順", "時間が短い順", "時間が長い順"].map((String val) {
             return DropdownMenuItem(
               value: val,
@@ -685,7 +769,7 @@ class _FilterModal extends ConsumerWidget {
               onPressed: () {
                 ref.read(trainingFilterProvider.notifier).state = FilterState();
               },
-              child: Text("リセット", style: TextStyle(color: kTextDarkSecondary)),
+              child: Text("リセット", style: TextStyle(color: Colors.white54)),
             ),
           ),
           SizedBox(width: 16),
@@ -694,12 +778,13 @@ class _FilterModal extends ConsumerWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
                 padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 0,
               ),
               onPressed: () => Navigator.pop(context),
-              child: Text("結果を表示"),
+              child: Text("適用する", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],

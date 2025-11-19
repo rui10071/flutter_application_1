@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'theme.dart';
 import 'login_or_signup_screen.dart'; 
 import 'account_settings_screen.dart';
@@ -69,22 +71,49 @@ final userProfileProvider = StateNotifierProvider<UserProfileNotifier, UserProfi
 });
 
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
 
 
+class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutQuad),
+    );
+    _controller.forward();
+  }
+
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       extendBodyBehindAppBar: true, 
       appBar: AppBar(
         backgroundColor: Colors.transparent, 
         elevation: 0, 
-        foregroundColor: isDark ? Colors.white : kTextLight, 
         actions: [
            IconButton(
-             icon: Icon(Icons.settings_outlined),
+             icon: Icon(Icons.settings_outlined, color: Colors.white),
              onPressed: () {
                Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingsScreen()));
              },
@@ -93,30 +122,44 @@ class ProfileScreen extends ConsumerWidget {
       ),
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: isDark 
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [kPrimaryColor, theme.scaffoldBackgroundColor],
-                      stops: [0.0, 0.4], 
-                    )
-                  : null,
-              color: isDark ? null : kBackgroundLight,
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=2940&auto=format&fit=crop",
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: Colors.black),
+              errorWidget: (context, url, error) => Container(color: Color(0xFF122017)),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.7),
+                    Colors.black,
+                  ],
+                  stops: [0.0, 0.6, 1.0], 
+                ),
+              ),
             ),
           ),
           SafeArea(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildHeaderSection(context, ref, isDark),
-                _buildBodyMetricsSection(context, ref, isDark),
-                _buildGoalSection(context, ref, isDark),
-                _buildSettingsSection(context, isDark),
-                _buildLogoutSection(context, isDark),
-                SizedBox(height: 100),
-              ],
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildHeaderSection(context, ref),
+                  _buildBodyMetricsSection(context, ref),
+                  _buildGoalSection(context, ref),
+                  _buildSettingsSection(context),
+                  _buildLogoutSection(context),
+                  SizedBox(height: 100),
+                ],
+              ),
             ),
           ),
         ],
@@ -125,9 +168,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildHeaderSection(BuildContext context, WidgetRef ref, bool isDark) {
+  Widget _buildHeaderSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
-    final textColor = isDark ? Colors.white : kTextLight;
 
 
     return Padding(
@@ -135,87 +177,100 @@ class ProfileScreen extends ConsumerWidget {
       child: Column(
         children: [
           Container(
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: isDark ? Colors.white : kPrimaryColor, width: 4),
+              border: Border.all(color: kPrimaryColor, width: 3),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
+                  color: kPrimaryColor.withOpacity(0.3),
+                  blurRadius: 20,
+                  spreadRadius: 5,
                 ),
               ],
             ),
-            child: CircleAvatar(
-              radius: 50,
-              backgroundImage: AssetImage("assets/images/shoulderstretch.jpg"),
-              backgroundColor: Colors.white.withOpacity(0.8), 
+            child: ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop",
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(color: Colors.grey[900], child: Icon(Icons.person, color: Colors.white54)),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[900],
+                  child: Icon(Icons.person, size: 50, color: Colors.white54),
+                ),
+              ),
             ),
           ),
           SizedBox(height: 16),
           Text(
             userProfile.name,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor, 
-                ),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white, 
+              fontSize: 24,
+            ),
           ),
           SizedBox(height: 4),
           Text(
             userProfile.email,
-            style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : kTextLightSecondary), 
+            style: TextStyle(fontSize: 14, color: Colors.white54), 
           ),
           SizedBox(height: 24),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? Colors.white.withOpacity(0.2) : kPrimaryColor.withOpacity(0.1), 
-              foregroundColor: isDark ? Colors.white : kPrimaryColor,
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: kPrimaryColor,
+              side: BorderSide(color: kPrimaryColor),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              elevation: 0,
-              side: BorderSide(color: isDark ? Colors.white.withOpacity(0.3) : kPrimaryColor, width: 1),
             ),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
             },
             icon: Icon(Icons.edit_outlined, size: 18),
-            label: Text("プロフィールを編集", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend')),
+            label: Text("プロフィール編集", style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
   
-  Widget _buildSectionContainer(BuildContext context, {required Widget child, required bool isDark}) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.transparent : Colors.white,
-        border: isDark ? null : Border.all(color: Colors.grey.shade300, width: 1.0),
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+  Widget _buildSectionContainer(BuildContext context, {required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: child,
+          ),
+        ),
       ),
-      child: child,
     );
   }
 
 
-  Widget _buildBodyMetricsSection(BuildContext context, WidgetRef ref, bool isDark) {
+  Widget _buildBodyMetricsSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
     return _buildSectionContainer(
       context,
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(context, "ステータス", isDark),
+          _buildSectionTitle("ステータス"),
           SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildMetricCard(context, ref, "身長", userProfile.height, "cm", isDark)),
+              Expanded(child: _buildMetricCard(context, "身長", userProfile.height, "cm")),
               SizedBox(width: 16),
-              Expanded(child: _buildMetricCard(context, ref, "体重", userProfile.weight, "kg", isDark)),
+              Expanded(child: _buildMetricCard(context, "体重", userProfile.weight, "kg")),
             ],
           ),
         ],
@@ -224,21 +279,17 @@ class ProfileScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildMetricCard(BuildContext context, WidgetRef ref, String label, String value, String unit, bool isDark) {
-    final Color cardColor = isDark ? kCardDark : Colors.grey[100]!;
-    final Color textColor = isDark ? Colors.white : kTextLight;
-
-
+  Widget _buildMetricCard(BuildContext context, String label, String value, String unit) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: Colors.black.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: isDark ? kTextDarkSecondary : kTextLightSecondary, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.white54, fontWeight: FontWeight.bold)),
           SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -246,16 +297,18 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               Text(
                 value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                style: TextStyle(
                   fontWeight: FontWeight.bold, 
-                  color: textColor,
+                  color: Colors.white,
+                  fontFamily: 'Lexend',
+                  fontSize: 24,
                   height: 1.0,
                 ),
               ),
               SizedBox(width: 4),
               Text(
                 unit,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: isDark ? kTextDarkSecondary : kTextLightSecondary),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white54),
               ),
             ],
           ),
@@ -265,38 +318,28 @@ class ProfileScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildGoalSection(BuildContext context, WidgetRef ref, bool isDark) {
+  Widget _buildGoalSection(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
-    final Color tileColor = isDark ? kCardDark : Colors.grey[100]!;
 
 
     return _buildSectionContainer(
       context,
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(context, "フィットネス目標", isDark),
+          _buildSectionTitle("現在の目標"),
           SizedBox(height: 12),
-          _buildSettingCard(
+          _buildSettingItem(
             context,
-            tileColor,
-            [
-              _buildSettingItem(
+            icon: Icons.flag_outlined,
+            title: "目標設定",
+            subtitle: userProfile.goal,
+            onTap: () {
+              Navigator.push(
                 context,
-                icon: Icons.flag_outlined,
-                title: "現在の目標",
-                subtitle: userProfile.goal,
-                isDark: isDark,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => OnboardingGoalScreen(isChangingGoal: true)),
-                  );
-                },
-              ),
-            ],
-            isDark
+                MaterialPageRoute(builder: (context) => OnboardingGoalScreen(isChangingGoal: true)),
+              );
+            },
           ),
         ],
       ),
@@ -304,151 +347,121 @@ class ProfileScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildSettingsSection(BuildContext context, bool isDark) {
-    final Color tileColor = isDark ? kCardDark : Colors.grey[100]!;
-
-
+  Widget _buildSettingsSection(BuildContext context) {
     return _buildSectionContainer(
       context,
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(context, "設定", isDark),
+          _buildSectionTitle("設定"),
           SizedBox(height: 12),
-          _buildSettingCard(
-            context,
-            tileColor,
-            [
-              _buildSettingItem(
-                context, 
-                icon: Icons.person_outline, 
-                title: "アカウント設定",
-                isDark: isDark,
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingsScreen()));
-                }
-              ),
-              _buildSettingItem(
-                context, 
-                icon: Icons.notifications_outlined, 
-                title: "通知設定",
-                isDark: isDark,
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationSettingsScreen()));
-                }
-              ),
-            ],
-            isDark
-          ),
-          SizedBox(height: 16),
-          _buildSettingCard(
-            context,
-            tileColor,
-            [
-              _buildSettingItem(
-                context, 
-                icon: Icons.help_outline, 
-                title: "ヘルプとサポート",
-                isDark: isDark,
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => HelpSupportScreen()));
-                }
-              ),
-              _buildSettingItem(
-                context, 
-                icon: Icons.info_outline, 
-                title: "バージョン情報",
-                subtitle: "1.0.0 (プロトタイプ)",
-                isDark: isDark,
-                onTap: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (context) => VersionInfoScreen()));
-                }
-              ),
-            ],
-            isDark
-          ),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _buildLogoutSection(BuildContext context, bool isDark) {
-    final Color tileColor = isDark ? kCardDark : Colors.grey[100]!;
-
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: _buildSettingCard(
-        context,
-        tileColor,
-        [
           _buildSettingItem(
             context, 
-            icon: Icons.logout, 
-            title: "ログアウト",
-            color: kHighlight, 
-            isDark: isDark,
+            icon: Icons.person_outline, 
+            title: "アカウント設定",
             onTap: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LoginOrSignupScreen()),
-                (route) => false,
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingsScreen()));
+            }
+          ),
+          _buildDivider(),
+          _buildSettingItem(
+            context, 
+            icon: Icons.notifications_outlined, 
+            title: "通知設定",
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationSettingsScreen()));
+            }
+          ),
+          _buildDivider(),
+          _buildSettingItem(
+            context, 
+            icon: Icons.help_outline, 
+            title: "ヘルプとサポート",
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => HelpSupportScreen()));
+            }
+          ),
+          _buildDivider(),
+          _buildSettingItem(
+            context, 
+            icon: Icons.info_outline, 
+            title: "バージョン情報",
+            subtitle: "1.0.0 (Beta)",
+            onTap: () {
+               Navigator.push(context, MaterialPageRoute(builder: (context) => VersionInfoScreen()));
             }
           ),
         ],
-        isDark
       ),
     );
   }
 
 
-  Widget _buildSectionTitle(BuildContext context, String title, bool isDark) {
+  Widget _buildLogoutSection(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13, 
-          fontWeight: FontWeight.bold, 
-          color: isDark ? kTextDarkSecondary : kTextLightSecondary,
-          letterSpacing: 0.5,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      child: _buildSectionContainer(
+        context,
+        child: _buildSettingItem(
+          context, 
+          icon: Icons.logout, 
+          title: "ログアウト",
+          color: kHighlight, 
+          onTap: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => LoginOrSignupScreen()),
+              (route) => false,
+            );
+          }
         ),
       ),
     );
   }
 
 
-  Widget _buildSettingCard(BuildContext context, Color cardColor, List<Widget> children, bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: children.length,
-        itemBuilder: (context, index) => children[index],
-        separatorBuilder: (context, index) => Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]),
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 14, 
+        fontWeight: FontWeight.bold, 
+        color: Colors.white70,
       ),
     );
   }
 
 
-  Widget _buildSettingItem(BuildContext context, {required IconData icon, required String title, String? subtitle, Color? color, required bool isDark, required VoidCallback onTap}) {
-    final textColor = color ?? (isDark ? Colors.white : kTextLight);
+  Widget _buildDivider() {
+    return Divider(height: 16, indent: 48, color: Colors.white.withOpacity(0.1));
+  }
+
+
+  Widget _buildSettingItem(BuildContext context, {required IconData icon, required String title, String? subtitle, Color? color, required VoidCallback onTap}) {
+    final textColor = color ?? Colors.white;
     
-    return ListTile(
-      leading: Icon(icon, color: color ?? (isDark ? kTextDarkSecondary : kTextLightSecondary)),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: textColor)),
-      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: isDark ? kTextDarkSecondary : kTextLightSecondary, fontSize: 13)) : null,
-      trailing: (color == null) ? Icon(Icons.chevron_right, color: isDark ? kTextDarkSecondary : kTextLightSecondary) : null,
+    return InkWell(
       onTap: onTap,
-      minLeadingWidth: 20, 
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color ?? Colors.white54, size: 24),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: textColor, fontSize: 16)),
+                  if (subtitle != null)
+                    Text(subtitle, style: TextStyle(color: Colors.white38, fontSize: 12)),
+                ],
+              ),
+            ),
+            if (color == null) Icon(Icons.chevron_right, color: Colors.white24, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }
