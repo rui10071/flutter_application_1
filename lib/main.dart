@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; 
 import 'theme.dart';
-import 'login_or_signup_screen.dart';
 import 'main_screen.dart';
 import 'repositories.dart';
 import 'providers.dart';
+import 'onboarding_screen.dart'; 
 
 
 void main() {
@@ -27,7 +27,7 @@ class MyApp extends ConsumerWidget {
       title: 'MIRRORSENSE',
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: ThemeMode.dark, // 強制ダークモード
+      themeMode: ThemeMode.dark, 
       debugShowCheckedModeBanner: false,
       
       localizationsDelegates: [
@@ -45,7 +45,7 @@ class MyApp extends ConsumerWidget {
           if (userId != null) {
             return MainScreen();
           } else {
-            return LoginOrSignupScreen(); 
+            return OnboardingScreen(); 
           }
         },
         loading: () => _buildSplashScreen(),
@@ -57,7 +57,7 @@ class MyApp extends ConsumerWidget {
 
   Widget _buildSplashScreen() {
     return Scaffold(
-      backgroundColor: kPrimaryColor,
+      backgroundColor: Colors.black,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -66,8 +66,11 @@ class MyApp extends ConsumerWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.white,
                 shape: BoxShape.circle,
+                border: Border.all(color: kPrimaryColor, width: 2),
+                boxShadow: [
+                  BoxShadow(color: kPrimaryColor.withOpacity(0.4), blurRadius: 20),
+                ],
               ),
               padding: EdgeInsets.all(20),
               child: CircularProgressIndicator(color: kPrimaryColor),
@@ -81,8 +84,12 @@ class MyApp extends ConsumerWidget {
 
   Widget _buildErrorScreen(Object error) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Center(
-        child: Text("起動エラーが発生しました: $error"),
+        child: Text(
+          "起動エラーが発生しました: $error",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }

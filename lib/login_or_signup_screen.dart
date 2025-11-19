@@ -83,8 +83,8 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.3), 
-                      Colors.black.withOpacity(0.0), 
+                      Colors.black.withOpacity(0.3),
+                      Colors.black.withOpacity(0.0),
                       Colors.black.withOpacity(0.7),
                       Colors.black.withOpacity(1.0),
                     ],
@@ -93,7 +93,7 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
                 ),
               ),
             ),
-            
+           
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -107,47 +107,40 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
 
 
                       Center(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15), 
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 20,
-                                    offset: Offset(0, 8),
-                                  ),
-                                ],
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: kPrimaryColor.withOpacity(0.3),
+                                blurRadius: 20,
+                                spreadRadius: 2,
                               ),
-                              child: Image.asset(
-                                "assets/images/Benchpress_logo.jpg",
-                                height: 120, 
-                                width: 120,
-                                fit: BoxFit.cover,
-                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              "assets/images/Benchpress_logo.jpg",
+                              height: 120,
+                              width: 120,
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
                       ),
                       SizedBox(height: 24),
                       Center(
-                        child: Text(
-                          "MIRRORSENSE",
-                          style: TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2.0,
-                            color: Colors.white.withOpacity(0.95),
+                        //child: Text(
+                          //"MIRRORSENSE",
+                          //style: TextStyle(
+                            //fontFamily: 'Lexend',
+                            //fontSize: 15,
+                            //fontWeight: FontWeight.bold,
+                            //letterSpacing: 2.0,
+                            //color: Colors.white.withOpacity(0.95),
                           ),
-                        ),
-                      ),
+                        //),
+                      //),
                       SizedBox(height: isSmallScreen ? 32 : 48),
 
 
@@ -181,9 +174,9 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      
-                      Spacer(flex: 2), 
-                      
+                     
+                      Spacer(flex: 2),
+                     
                       Row(
                         children: [
                           Expanded(
@@ -232,7 +225,7 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
                         ),
                       ),
                       SizedBox(height: 24),
-                      
+                     
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -259,9 +252,9 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
                           ),
                         ],
                       ),
-                      
-                      Spacer(flex: 1), 
-                      
+                     
+                      Spacer(flex: 1),
+                     
                       Center(
                         child: GestureDetector(
                           onTap: () async {
@@ -291,13 +284,13 @@ class _LoginOrSignupScreenState extends State<LoginOrSignupScreen> with SingleTi
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), 
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
           height: 54,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12), 
+            color: Colors.white.withOpacity(0.12),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.5), 
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.5),
           ),
           child: Material(
             color: Colors.transparent,

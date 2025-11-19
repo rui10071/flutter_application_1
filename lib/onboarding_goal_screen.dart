@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
@@ -23,56 +24,85 @@ class OnboardingGoalScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(isChangingGoal ? "目的を変更" : "目的を選択 (3/3)"),
+        title: Text(isChangingGoal ? "目標を変更" : "目標を選択 (3/3)", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Lexend', color: Colors.white)),
         elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("主な目的を教えてください", style: Theme.of(context).textTheme.titleLarge),
-            SizedBox(height: 8),
-            Text("あなたに合ったメニューをおすすめします。", style: TextStyle(color: kTextDarkSecondary)),
-            SizedBox(height: 24),
-            Expanded(
-              child: ListView.builder(
-                itemCount: goals.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Card(
-                      child: ListTile(
-                        title: Text(goals[index], style: TextStyle(fontWeight: FontWeight.w500)),
-                        trailing: Icon(Icons.chevron_right),
-                        onTap: () {
-                          ref.read(userProfileProvider.notifier).updateGoal(goals[index]);
-                          _completeOnboarding(context, ref); // refを渡す
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (!isChangingGoal) ...[
-              SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    _completeOnboarding(context, ref); // refを渡す
-                  },
-                  child: Text(
-                    "あとで選択する",
-                    style: TextStyle(color: kTextDarkSecondary, fontSize: 14),
-                  ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black, Color(0xFF121212)],
                 ),
               ),
-            ]
-          ],
-        ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("主な目的を教えてください", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                SizedBox(height: 8),
+                Text("あなたに合ったメニューをおすすめします。", style: TextStyle(color: Colors.white54)),
+                SizedBox(height: 32),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: goals.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              ),
+                              child: ListTile(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                title: Text(goals[index], style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                trailing: Icon(Icons.chevron_right, color: kPrimaryColor),
+                                onTap: () {
+                                  ref.read(userProfileProvider.notifier).updateGoal(goals[index]);
+                                  _completeOnboarding(context, ref); 
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                if (!isChangingGoal) ...[
+                  SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        _completeOnboarding(context, ref); 
+                      },
+                      child: Text(
+                        "あとで選択する",
+                        style: TextStyle(color: Colors.white38, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

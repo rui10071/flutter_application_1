@@ -1,30 +1,33 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'theme.dart';
-import 'execution_screen.dart'; // 追加
-import 'training_model.dart'; // 追加
+import 'execution_screen.dart'; 
+import 'training_model.dart'; 
 
 
 class CameraPermissionScreen extends StatelessWidget {
-  final TrainingMenu menu; // どのメニューを実行するか受け取る
+  final TrainingMenu menu;
 
 
-  // コンストラクタでmenuを必須にする
   const CameraPermissionScreen({required this.menu});
 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [kPrimaryColor.withOpacity(0.2), kBackgroundDark],
-                stops: [0.0, 1.0],
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [kPrimaryColor.withOpacity(0.1), Colors.black],
+                  stops: [0.0, 0.6],
+                ),
               ),
             ),
           ),
@@ -35,27 +38,31 @@ class CameraPermissionScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(24),
+                    padding: EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withOpacity(0.05),
                       shape: BoxShape.circle,
+                      border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+                      boxShadow: [BoxShadow(color: kPrimaryColor.withOpacity(0.1), blurRadius: 30)],
                     ),
                     child: Icon(Icons.videocam_off_outlined, size: 64, color: Colors.white),
                   ),
-                  SizedBox(height: 32),
+                  SizedBox(height: 40),
                   Text(
                     "カメラの権限が必要です",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      fontSize: 24,
+                      fontFamily: 'Noto Sans JP'
                     ),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 16),
                   Text(
-                    "※現在はデバッグモードです。\n「強制スタート」を押すと、カメラ権限なしでトレーニング画面を確認できます。",
+                    "AIフォーム解析にはカメラへのアクセスが必要です。\n設定から許可してください。",
                     style: TextStyle(
-                      color: kTextDarkSecondary,
+                      color: Colors.white54,
                       height: 1.6,
                       fontSize: 14,
                     ),
@@ -63,45 +70,33 @@ class CameraPermissionScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 48),
                   Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: kPrimaryColor.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                    width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kPrimaryColor,
-                        foregroundColor: Colors.white,
-                        minimumSize: Size(double.infinity, 56),
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28),
                         ),
-                        textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Lexend'),
                       ),
                       onPressed: () {
-                        // 【デバッグ用修正】本来は openAppSettings() だが、強制的に実行画面へ飛ばす
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => ExecutionScreen(menu: menu)),
-                        );
+                        openAppSettings();
                       },
-                      child: Text("強制スタート（デバッグ）"),
+                      child: Text("設定を開く", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  SizedBox(height: 24),
+                  SizedBox(height: 16),
                   TextButton(
                     onPressed: () {
-                      // 本当の設定画面に行きたい場合用（予備）
-                      openAppSettings();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => ExecutionScreen(menu: menu)),
+                      );
                     },
                     child: Text(
-                      "本来の設定画面を開く",
-                      style: TextStyle(color: Colors.white54),
+                      "デバッグ: 強制スタート",
+                      style: TextStyle(color: Colors.white24, fontSize: 12),
                     ),
                   ),
                   TextButton(

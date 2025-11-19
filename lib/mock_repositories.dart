@@ -31,7 +31,7 @@ class MockAuthRepository implements AuthRepository {
 
 
     if (password == "error") {
-      throw Exception("意図的なエラー");
+      throw Exception("ログインエラー");
     }
 
 
@@ -77,8 +77,8 @@ class MockUserRepository implements UserRepository {
     await Future.delayed(Duration(milliseconds: 500));
     return UserProfile(
       id: userId,
-      name: "田中 健太 (Mock)",
-      email: "mock@example.com",
+      name: "田中 健太", // 日本語化
+      email: "kenta.tanaka@example.com",
       height: 175.0,
       weight: 68.0,
       age: 28,
@@ -91,8 +91,8 @@ class MockUserRepository implements UserRepository {
   Stream<UserProfile?> watchProfile(String userId) {
     return Stream.value(UserProfile(
       id: userId,
-      name: "田中 健太 (Mock Stream)",
-      email: "mock@example.com",
+      name: "田中 健太", // 日本語化
+      email: "kenta.tanaka@example.com",
       height: 175.0,
       weight: 68.0,
       age: 28,
@@ -121,7 +121,7 @@ class MockTrainingRepository implements TrainingRepository {
         score: 85,
         duration: "10分",
         calories: 50,
-        memo: "膝に違和感あり",
+        memo: "膝の調子が良い",
       )
     ];
   }
@@ -138,7 +138,7 @@ class MockTrainingRepository implements TrainingRepository {
         score: 85,
         duration: "10分",
         calories: 50,
-        memo: "膝に違和感あり",
+        memo: "膝の調子が良い",
       )
     ]);
   }

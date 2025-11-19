@@ -10,6 +10,7 @@ import 'help_support_screen.dart';
 import 'edit_profile_screen.dart';
 import 'onboarding_goal_screen.dart'; 
 import 'version_info_screen.dart';
+import 'paywall_screen.dart'; // 追加
 
 
 class UserProfile {
@@ -153,6 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                 padding: EdgeInsets.zero,
                 children: [
                   _buildHeaderSection(context, ref),
+                  _buildPremiumCard(context), // 課金ボタン追加
                   _buildBodyMetricsSection(context, ref),
                   _buildGoalSection(context, ref),
                   _buildSettingsSection(context),
@@ -163,6 +165,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
             ),
           ),
         ],
+      ),
+    );
+  }
+
+
+  Widget _buildPremiumCard(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => PaywallScreen()));
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [kPrimaryColor.withOpacity(0.2), kPrimaryColor.withOpacity(0.05)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: kPrimaryColor.withOpacity(0.5)),
+                boxShadow: [BoxShadow(color: kPrimaryColor.withOpacity(0.1), blurRadius: 12)],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: kPrimaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.star, color: Colors.black, size: 20),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("プレミアムプランに加入", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        SizedBox(height: 4),
+                        Text("全ての機能が無制限で使い放題", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios, color: kPrimaryColor, size: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

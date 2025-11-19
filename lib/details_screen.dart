@@ -7,6 +7,7 @@ import 'theme.dart';
 import 'execution_screen.dart';
 import 'training_model.dart';
 import 'camera_permission_screen.dart';
+import 'camera_preview_screen.dart';
 
 
 class DetailsScreen extends StatefulWidget {
@@ -399,11 +400,11 @@ class _DetailsScreenState extends State<DetailsScreen> with SingleTickerProvider
               onPressed: () async {
                 var status = await Permission.camera.status;
                 if (status.isGranted) {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => CameraPreviewScreen(menu: widget.menu)));
                 } else {
                   var result = await Permission.camera.request();
                   if (result.isGranted) {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ExecutionScreen(menu: widget.menu)));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => CameraPreviewScreen(menu: widget.menu)));
                   } else {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => CameraPermissionScreen(menu: widget.menu)));
                   }

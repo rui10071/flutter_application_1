@@ -144,7 +144,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTi
         children: [
           Positioned.fill(
             child: CachedNetworkImage(
-              imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2940&auto=format&fit=crop",
+              imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(color: Colors.black),
               errorWidget: (context, url, error) => Container(color: Color(0xFF122017)),
