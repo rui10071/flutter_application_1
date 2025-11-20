@@ -7,7 +7,7 @@ import 'common_widgets.dart';
 import 'repositories.dart';
 import 'providers.dart';
 import 'email_login_screen.dart';
-import 'onboarding_profile_screen.dart'; // 変更: オンボーディングへ遷移するため追加
+import 'onboarding_profile_screen.dart'; 
 
 
 class EmailSignupScreen extends ConsumerStatefulWidget {
