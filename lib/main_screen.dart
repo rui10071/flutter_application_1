@@ -49,7 +49,7 @@ class MainScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(context, ref, icon: Icons.home_filled, label: "ホーム", index: 0), // アイコン変更
+                  _buildNavItem(context, ref, icon: Icons.home_filled, label: "ホーム", index: 0), 
                   _buildNavItem(context, ref, icon: Icons.fitness_center_rounded, label: "ワークアウト", index: 1),
                   _buildNavItem(context, ref, icon: Icons.bar_chart_rounded, label: "記録", index: 2),
                   _buildNavItem(context, ref, icon: Icons.person_rounded, label: "プロフィール", index: 3),

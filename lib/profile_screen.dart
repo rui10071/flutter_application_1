@@ -10,7 +10,7 @@ import 'help_support_screen.dart';
 import 'edit_profile_screen.dart';
 import 'onboarding_goal_screen.dart'; 
 import 'version_info_screen.dart';
-import 'paywall_screen.dart'; // 追加
+import 'paywall_screen.dart'; 
 
 
 class UserProfile {
@@ -154,7 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                 padding: EdgeInsets.zero,
                 children: [
                   _buildHeaderSection(context, ref),
-                  _buildPremiumCard(context), // 課金ボタン追加
+                  _buildPremiumCard(context), 
                   _buildBodyMetricsSection(context, ref),
                   _buildGoalSection(context, ref),
                   _buildSettingsSection(context),

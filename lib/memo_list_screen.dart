@@ -12,7 +12,6 @@ class MemoListScreen extends ConsumerWidget {
     final allHistory = ref.watch(trainingHistoryProvider);
     final selectedType = ref.watch(memoFilterProvider);
     
-    // メモがあり、かつ選択されたタイプでフィルタリング
     final memos = allHistory.where((item) {
       final hasMemo = item.memo.isNotEmpty;
       final matchesType = (selectedType == 'すべて' || item.menu.title == selectedType);
@@ -78,7 +77,6 @@ class MemoListScreen extends ConsumerWidget {
 
   Widget _buildFilterChips(BuildContext context, WidgetRef ref) {
     final allHistory = ref.watch(trainingHistoryProvider);
-    // メモがある履歴からユニークな種目名リストを作成
     final types = {"すべて", ...allHistory.where((item) => item.memo.isNotEmpty).map((item) => item.menu.title)}.toList();
     final selectedType = ref.watch(memoFilterProvider);
 

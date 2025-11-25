@@ -9,23 +9,23 @@ import 'main_screen.dart';
 
 
 class FilterState {
-  final String category;
+  final String type;
+  final String bodyPart;
   final String difficulty;
-  final String bodyPart; 
 
 
   FilterState({
-    this.category = "すべて",
-    this.difficulty = "すべて",
+    this.type = "すべて",
     this.bodyPart = "すべて",
+    this.difficulty = "すべて",
   });
 
 
-  FilterState copyWith({String? category, String? difficulty, String? bodyPart}) {
+  FilterState copyWith({String? type, String? bodyPart, String? difficulty}) {
     return FilterState(
-      category: category ?? this.category,
-      difficulty: difficulty ?? this.difficulty,
+      type: type ?? this.type,
       bodyPart: bodyPart ?? this.bodyPart,
+      difficulty: difficulty ?? this.difficulty,
     );
   }
 }
@@ -37,41 +37,47 @@ final searchQueryProvider = StateProvider<String>((ref) => "");
 
 final filteredTrainingProvider = Provider<List<TrainingMenu>>((ref) {
   final filter = ref.watch(trainingFilterProvider);
-  final searchQuery = ref.watch(searchQueryProvider);
+  final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
 
 
   List<TrainingMenu> list = DUMMY_TRAININGS;
 
 
-  // 検索フィルタ
   if (searchQuery.isNotEmpty) {
-    final query = searchQuery.toLowerCase();
-    list = list.where((menu) =>
-      menu.title.toLowerCase().contains(query) ||
-      menu.titleEn.toLowerCase().contains(query) ||
-      menu.searchKeywords.any((k) => k.toLowerCase().contains(query))
-    ).toList();
+    list = list.where((menu) {
+      return menu.title.toLowerCase().contains(searchQuery) ||
+             menu.titleEn.toLowerCase().contains(searchQuery) ||
+             menu.searchKeywords.any((k) => k.toLowerCase().contains(searchQuery));
+    }).toList();
   }
 
 
-  // カテゴリフィルタ（ダンベル/自重など）
-  if (filter.category != "すべて") {
-    // ※今回は簡易的に判定。本来はDBに種別を持たせる
-    if (filter.category == "自重") {
-      list = list.where((menu) => ["squat", "pushup"].contains(menu.id)).toList();
-    } else if (filter.category == "ダンベル") {
-      list = list.where((menu) => ["armcurl", "sidelaterals", "shoulderpress"].contains(menu.id)).toList();
+  if (filter.type != "すべて") {
+    if (filter.type == "自重") {
+      list = list.where((menu) => !menu.equipmentRequired).toList();
+    } else if (filter.type == "ダンベル") {
+      list = list.where((menu) => menu.equipmentRequired).toList();
     }
   }
 
 
-  // 部位フィルタ
   if (filter.bodyPart != "すべて") {
-    list = list.where((menu) => menu.targetBodyParts.any((part) => part.contains(filter.bodyPart) || menu.category.contains(filter.bodyPart))).toList();
+    Map<String, String> partMap = {
+      "腕": "upper_body_arms",
+      "肩": "upper_body_shoulders",
+      "胸": "upper_body_chest",
+      "背中": "upper_body_back",
+      "下半身": "lower_body",
+    };
+    String targetCategory = partMap[filter.bodyPart] ?? "";
+    
+    list = list.where((menu) => 
+      menu.category == targetCategory || 
+      menu.targetBodyParts.any((part) => part.contains(filter.bodyPart))
+    ).toList();
   }
 
 
-  // 難易度フィルタ
   if (filter.difficulty != "すべて") {
     list = list.where((menu) => menu.difficulty == filter.difficulty).toList();
   }
@@ -177,7 +183,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTi
         },
       ),
       title: Text(
-        "トレーニング選択", 
+        "メニュー選択", 
         style: TextStyle(fontFamily: 'Lexend', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20)
       ),
     );
@@ -234,8 +240,8 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTi
             context, 
             "すべて", 
             ["すべて", "自重", "ダンベル"], 
-            filter.category,
-            (val) => ref.read(trainingFilterProvider.notifier).state = filter.copyWith(category: val)
+            filter.type,
+            (val) => ref.read(trainingFilterProvider.notifier).state = filter.copyWith(type: val)
           ),
           SizedBox(width: 12),
           _buildDropdownButton(
@@ -381,9 +387,9 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTi
                       children: [
                         Row(
                           children: [
-                            _buildTag(item.category),
+                            _buildTag(item.difficulty),
                             SizedBox(width: 8),
-                            _buildTag(item.difficulty, isOutline: true),
+                            _buildTag(item.equipmentRequired ? "ダンベル" : "自重", isOutline: true),
                           ],
                         ),
                         SizedBox(height: 12),
@@ -395,7 +401,7 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTi
                         ),
                         SizedBox(height: 4),
                         Text(
-                          item.targetBodyParts.join(", "),
+                          item.targetBodyParts.join("、"),
                           style: TextStyle(color: Colors.white54, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis
@@ -433,7 +439,5 @@ class _SelectionScreenState extends ConsumerState<SelectionScreen> with SingleTi
     );
   }
 }
-
-
 
 

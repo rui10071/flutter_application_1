@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // 追加
+import 'package:cached_network_image/cached_network_image.dart'; 
 import 'theme.dart';
 import 'profile_screen.dart'; 
 

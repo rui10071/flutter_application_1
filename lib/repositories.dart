@@ -6,7 +6,7 @@ abstract class AuthRepository {
   Future<void> signInWithEmail(String email, String password);
   Future<void> signUpWithEmail(String email, String password);
   Future<void> signOut();
-  Future<void> deleteAccount(); // 追加: アカウント削除
+  Future<void> deleteAccount(); 
   String? get currentUserId;
 }
 

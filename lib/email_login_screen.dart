@@ -83,7 +83,6 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
       if (!mounted) return;
 
 
-      // 【修正】ログイン成功時にタブを「ホーム(0)」にリセット
       ref.read(mainNavIndexProvider.notifier).state = 0;
 
 
@@ -119,7 +118,6 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
     });
 
 
-    // 【修正】ソーシャルログイン時もタブを「ホーム(0)」にリセット
     ref.read(mainNavIndexProvider.notifier).state = 0;
 
 

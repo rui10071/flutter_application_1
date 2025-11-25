@@ -79,7 +79,6 @@ Future<void> showErrorDialog(BuildContext context, String title, String content)
         content: Text(content),
         actions: [
           TextButton(
-            // テーマの色を使用
             child: Text("OK", style: TextStyle(color: Theme.of(context).primaryColor)),
             onPressed: () => Navigator.pop(context),
           ),

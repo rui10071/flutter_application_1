@@ -272,7 +272,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> with TickerProvider
         Expanded(child: _buildStatCard(Icons.timer_outlined, widget.menu.duration, "時間")),
         SizedBox(width: 16),
         Expanded(child: _buildStatCard(Icons.fitness_center, _reps, "回数")),
-        // カロリー削除済み
       ],
     );
   }

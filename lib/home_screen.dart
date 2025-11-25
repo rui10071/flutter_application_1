@@ -237,7 +237,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                         ),
                         Container(
                           height: 6,
-                          width: constraints.maxWidth * (45 / 60), // 親要素の幅に対する割合で計算
+                          width: constraints.maxWidth * (45 / 60), 
                           decoration: BoxDecoration(
                             gradient: LinearGradient(colors: [kPrimaryColor, Color(0xFF2E7D32)]),
                             borderRadius: BorderRadius.circular(3),

@@ -95,7 +95,6 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       if (!mounted) return;
       showSnackBar(context, "登録が完了しました！", isError: false);
       
-      // 変更: 登録後はオンボーディング（身長体重入力）へ
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => OnboardingProfileScreen()),

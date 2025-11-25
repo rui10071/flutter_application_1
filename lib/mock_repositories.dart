@@ -77,7 +77,7 @@ class MockUserRepository implements UserRepository {
     await Future.delayed(Duration(milliseconds: 500));
     return UserProfile(
       id: userId,
-      name: "田中 健太", // 日本語化
+      name: "田中 健太", 
       email: "kenta.tanaka@example.com",
       height: 175.0,
       weight: 68.0,
@@ -91,7 +91,7 @@ class MockUserRepository implements UserRepository {
   Stream<UserProfile?> watchProfile(String userId) {
     return Stream.value(UserProfile(
       id: userId,
-      name: "田中 健太", // 日本語化
+      name: "田中 健太", 
       email: "kenta.tanaka@example.com",
       height: 175.0,
       weight: 68.0,

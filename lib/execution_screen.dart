@@ -161,14 +161,12 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
 
           return Stack(
             children: [
-              // カメラ映像のプレースホルダー（黒背景）
               Positioned.fill(
                 child: Container(
                   color: Colors.black, 
                 ),
               ),
               
-              // 骨格描画レイヤー
               _buildSkeleton(poseFrame),
 
 
